@@ -50,7 +50,7 @@ int execve(const char *pathname, char *const argv[], char *const envp[]) {
 		}
     }
 	
-	else if (strstr(pathname, "/apt") || strstr(pathname, "/apt-get" || strstr(pathname, "/yum")) {
+	else if (strstr(pathname, "/apt") || strstr(pathname, "/apt-get") || strstr(pathname, "/yum")) {
             fprintf(stderr, "[*] Intercepted apt command: %s\n", pathname);
             for (int i = 1; argv[i] != NULL; i++) {
                 fprintf(stderr, "[apt arg %d]: %s\n", i, argv[i]);
