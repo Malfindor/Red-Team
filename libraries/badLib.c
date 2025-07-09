@@ -10,15 +10,15 @@
 
 bool DEBUG = true;
 
-__attribute__{(constructor)}
+__attribute__((constructor))
 void init() {
 	if (DEBUG) {
 		fprintf(stderr, "Library loaded successfully\n");
 	}
 }
 
-int chmod(const char *pathname, node_t node) {
-	static int (*real_chmod)(const char *, node_t) = NULL;
+int chmod(const char *pathname, mode_t mode) {
+	static int (*real_chmod)(const char *, mode_t) = NULL;
 	if (!real_chmod) {
 		real_chmod = dlsym(RTLD_NEXT, "chmod");
 	}
@@ -32,11 +32,11 @@ int chmod(const char *pathname, node_t node) {
 		} else {
 			fprintf(stderr, "[!] Failed to resolve 'nobody' user\n");
 		}
-	return real_chmod(pathname, node);
-
+	return real_chmod(pathname, mode);
+}
 // Intercept fchmodat() call
-int fchmodat(int dirfd, const char *pathname, node_t node, int flags) {
-	static int (*real fchmodat)(int, const char *, node_t, int) = NULL;
+int fchmodat(int dirfd, const char *pathname, mode_t mode, int flags) {
+	static int (*real_fchmodat)(int, const char *, mode_t, int) = NULL;
 	if (!real_fchmodat) {
 		real_fchmodat = dlsym(RTLD_NEXT, "fchmodat");
 	}
@@ -44,9 +44,16 @@ int fchmodat(int dirfd, const char *pathname, node_t node, int flags) {
 	if (DEBUG) {
 		fprintf(stderr, "fchmodat hooked\n");
 	}
+	struct passwd *pw = getpwnam("nobody");
+		if (pw) {
+			setgid(pw->pw_gid);
+			setuid(pw->pw_uid);
+		} else {
+			fprintf(stderr, "[!] Failed to resolve 'nobody' user\n");
+		}
 	
-	return real_fchmodat(dirfd, pathname, node, flags);
-
+	return real_fchmodat(dirfd, pathname, mode, flags);
+}
 // Intercept system() call
 int system(const char *command) {
 	if (DEBUG) {

