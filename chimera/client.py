@@ -2,6 +2,7 @@ import socket
 import struct
 import sys
 import time
+import os
 
 if (len(sys.argv) != 2):
     print("Usage: server.py {ip to send to}")

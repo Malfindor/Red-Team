@@ -2,6 +2,8 @@ import socket
 import struct
 import sys
 import random
+import time
+import os
 
 if (len(sys.argv) != 2):
     print("Usage: server.py {ip to listen on}")
@@ -95,14 +97,23 @@ def sendResponseC(sock, data, addr, fileName):
 def run(bind_ip=LISTEN_IP, port=53):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((bind_ip, port))
-    print(f"[+] DNS server listening on {bind_ip}:{port}")
+    print(f"[+] Chimera server listening on {bind_ip}:{port}")
 
     while True:
         data, addr = sock.recvfrom(512)
         domain, _ = parse_qname(data, 12)
         domain = domain.lower().strip('.')
 
-        print(f"[>] Query from {addr[0]}:{addr[1]} for {domain}")
+        print(f"[>] Message from {addr[0]}:{addr[1]} for {domain}")
+        
+        filePath = "/var/" + addr[0]
+        if (!os.path.exists(filePath)):
+            print("New beacon identified from " + addr[0] + ".")
+            open(filePath, "w").close()
+            
+        f = open(filePath, "w")
+        f.write('Last heard from: (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))')
+        f.close()
         
         if (domain == "supportcenter.net"):
             sendResponseA(sock, data, addr, 100)
