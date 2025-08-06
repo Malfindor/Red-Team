@@ -106,13 +106,13 @@ def run(bind_ip=LISTEN_IP, port=53):
 
         print(f"[>] Message from {addr[0]}:{addr[1]} for {domain}")
         
-        filePath = "/var/" + addr[0]
-        if (!os.path.exists(filePath)):
+        filePath = "/tmp/" + addr[0]
+        if not (os.path.exists(filePath)):
             print("New beacon identified from " + addr[0] + ".")
             open(filePath, "w").close()
             
         f = open(filePath, "w")
-        f.write('Last heard from: (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))')
+        f.write('Last heard from: ' + (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
         f.close()
         
         if (domain == "supportcenter.net"):
