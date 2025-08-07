@@ -106,7 +106,10 @@ def run(bind_ip=LISTEN_IP, port=53):
 
         print(f"[>] Message from {addr[0]}:{addr[1]} for {domain}")
         
-        filePath = "/tmp/" + addr[0]
+        if not (os.path.exists("/tmp/chimera/"):
+            os.system("mkdir /tmp/chimera/")
+        
+        filePath = "/tmp/chimera/" + addr[0]
         if not (os.path.exists(filePath)):
             print("New beacon identified from " + addr[0] + ".")
             open(filePath, "w").close()

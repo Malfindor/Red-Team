@@ -1,5 +1,13 @@
 Chimera is a C2 implementation utilizing DNS queries/responses to transfer messages and data.
 
+Files:
+
+server.py - hosts the main Chimera C2 server, handles beacon calls and messaging
+client.py - runs on target machine(s), calls back to the server and receives messages from it
+attacker.py - runs seperate from the server, queries the server for active beacons and sends commands to the server for beacons to execute
+serverlistener.py - listens for commands from instances of attacker.py, records the commands in their respective beacon files
+
+
 Legend:
 
 
