@@ -19,7 +19,7 @@ def run():
         
         dataSplit = data.decode().split(":")
         
-        if (len(dataSplit) == 1):      
+        if (len(dataSplit) == 1):
             if (dataSplit[0] == "check"):
                 sock.sendto("confirm".encode(), addr)
             elif (dataSplit[0] == "status"):
@@ -41,6 +41,19 @@ def run():
                 sock.sendto(response.encode(), addr)
             else:
                 pass
+        elif (len(dataSplit) == 2):
+            if (dataSplit[0] == "status") and (len(dataSplit[1].split('.')) == 4):
+                if not os.path.exists("/tmp/chimera/" + dataSplit[1]):
+                    sock.sendto("not_found".encode(), addr)
+                else:
+                    response = []
+                    f = open("/tmp/chimera/" + dataSplit[1], "r")
+                    cont = f.read()
+                    contSplit = cont.split('\n')
+                    response.append((contSplit[0].split(': '))[1])
+                    del(contSplit[0])
+                    response = response + contSplit
+                    sock.sendto(response.encode(), addr)
         else:
             pass
             
