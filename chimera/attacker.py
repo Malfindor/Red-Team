@@ -1,9 +1,7 @@
 import socket
 import sys
 
-SERVER = ""
-
-def runInteractive():
+def runInteractive(SERVER):
     if (SERVER == ""):
         x = True
         while x:
@@ -38,10 +36,12 @@ def runInteractive():
                 print("Socket timeout. Server may be down or otherwise unresponsive.")
                 timeout = True
             if not timeout:
-                print("Beacon list: ")
                 response = resp.decode()
+                beaconList = response.split(';')
                 print("Beacon IP ||| Last Heard From")
-                for beacon in response:
+                print("----------------------------------")
+                for beacon in beaconList:
+                    beacon = beacon.split('|')
                     print(beacon[0] + " -- " + beacon[1])
                 print("")
         else:
@@ -89,12 +89,12 @@ list - collects a list of all beacons registered to the server, along with their
     
 sock = formSocket()
 if (len(sys.argv) == 1):
-    runInteractive()
+    runInteractive("")
 elif (len(sys.argv) == 2):
     if not (len(sys.argv[1].split('.')) == 4):
         print("Invalid IP address. Note: This will only accept IPv4 addresses.")
     else:
         SERVER = sys.argv[1]
-        runInteractive()
+        runInteractive(SERVER)
 else:
     printHelp()

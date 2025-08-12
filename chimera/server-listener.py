@@ -2,8 +2,13 @@ import socket
 import sys
 import os
 
-bind_ip = "127.0.0.1"
 port = 10000
+
+if (len(sys.argv) != 2):
+    print("Usage: server-listener.py {ip to listen on}")
+    exit
+else:
+    bind_ip = sys.argv[1]
 
 def run():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -36,7 +41,10 @@ def run():
                     lineSplit = line.split(': ')
                     time = lineSplit[1]
                     beaconEntry.append(time)
+                    beaconEntry = '|'.join(beaconEntry)
                     response.append(beaconEntry)
+                
+                response = ';'.join(response)
                 
                 sock.sendto(response.encode(), addr)
             else:

