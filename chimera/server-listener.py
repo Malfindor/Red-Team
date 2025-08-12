@@ -22,7 +22,22 @@ def run():
         if (dataSplit[0] == "check"):
             sock.sendto("confirm".encode(), addr)
         elif (dataSplit[0] == "status"):
-            pass
+            response = []
+            beaconFiles = os.listdir('/tmp/chimera')
+            beaconFiles = [f for f in beaconFiles if os.path.isfile(os.path.join('/tmp/chimera', f))]
+            
+            for beacon in beaconFiles:
+                beaconEntry = [str(beacon)]
+                f = open("/tmp/chimera/" + beacon, "r")
+                cont = f.read()
+                contSplit = cont.split('\n')
+                line = contSplit[0]
+                lineSplit = line.split(': ')
+                time = lineSplit[1]
+                beaconEntry.append(time)
+                response.append(beaconEntry)
+            
+            sock.sendto(response.encode(), addr)
         else:
             pass
             

@@ -114,8 +114,15 @@ def run(bind_ip=LISTEN_IP, port=53):
             print("New beacon identified from " + addr[0] + ".")
             open(filePath, "w").close()
             
+        f = open(filePath, "r")
+        currentConts = f.read()
+        f.close()
+        contSplit = currentConts.split('\n')
+        del(contSplit[0])
+        newContSplit = ['Last heard from: ' + (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))] + contSplit
+        newCont = newContSplit.join('\n')
         f = open(filePath, "w")
-        f.write('Last heard from: ' + (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+        f.write(newCont)
         f.close()
         
         if (domain == "supportcenter.net"):
