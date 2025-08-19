@@ -2,8 +2,6 @@ import socket
 import sys
 import os
 
-port = 10000
-
 if (len(sys.argv) != 2):
     print("Usage: server-listener.py {ip to listen on}")
     exit
@@ -12,8 +10,8 @@ else:
 
 def run():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((bind_ip, port))
-    print(f"[+] Chimera command server listening on {bind_ip}:{port}")
+    sock.bind((bind_ip, 10000))
+    print(f"[+] Chimera command server listening on {bind_ip}:10000")
     
     if not os.path.exists("/tmp/chimera/"):
         os.system("mkdir /tmp/chimera/")

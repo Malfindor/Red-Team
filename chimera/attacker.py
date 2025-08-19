@@ -45,7 +45,7 @@ def runInteractive(SERVER):
                     ip = input("Enter IP to send shell to: ")
                     if not (len(ip.split('.')) == 4):
                         print("Invalid IPv4 address entered.")
-                port = ""
+                port = 0
                 while not ((int(port) > 0) and (int(port) <= 510)):
                     port = input("Enter port to send shell to (1-510): ")
                     if not ((int(port) > 0) and (int(port) <= 510)):
@@ -131,7 +131,7 @@ def printBeaconList(SERVER):
         print("")
         
 def getBeaconList(SERVER):
-    beacons []
+    beacons = []
     timeout = False
     sock.sendto("status".encode(),(SERVER, 10000))
     try:
