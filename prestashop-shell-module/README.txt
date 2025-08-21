@@ -1,0 +1,1 @@
+This module can be uploaded to prestashop 1.7.x and will result in a webshell located at /prestashop/modules/shell/cmdshell.php?cmd={cmd}
