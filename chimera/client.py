@@ -131,6 +131,6 @@ while True:
             port = int(portIPSplit[0]) + int(portIPSplit[1])
             
             if not ((address == "100.100.100.100") and (port == 100)):
-                print("Sending file contents to " + address + ":" + str(port)") 
+                print("Sending file contents to " + address + ":" + str(port)) 
             
     time.sleep(WAIT_TIME)
