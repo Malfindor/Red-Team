@@ -82,7 +82,7 @@ def run():
                     sock.sendto("confirm".encode(), addr)
         elif (len(dataSplit) == 5):
             if (dataSplit[0] == "file") and (len(dataSplit[1]) > 0) and (len(dataSplit[2].split('.')) == 4) and ((int(dataSplit[3]) > 0) and (int(dataSplit[3]) <= 510)) and (len(dataSplit[4].split('.')) == 4):
-                if not os.path.exists("/tmp/chimera/" + dataSplit[3]):
+                if not os.path.exists("/tmp/chimera/" + dataSplit[4]):
                     sock.sendto("not_found".encode(), addr)
                 else:
                     filePath = dataSplit[1]
