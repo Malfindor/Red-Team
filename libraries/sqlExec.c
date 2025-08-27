@@ -1,5 +1,5 @@
 // Designed to be uploaded to a Mariadb instance as 'sys_exec()'
-#include <mysql/mysql.h>
+#include <mysql.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -19,7 +19,7 @@ my_bool sys_exec_init(UDF_INIT *initid, UDF_ARGS *args, char *message) {
 // Main function
 int sys_exec(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *error) {
     char *cmd = args->args[0];
-	system(cmd)
+	system(cmd);
     return 0; // success
 }
 
