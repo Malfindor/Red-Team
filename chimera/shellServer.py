@@ -6,15 +6,15 @@ def run(HOST, PORT):
         s.bind((HOST, PORT))
         s.listen(1)
         conn, addr = s.accept()
-        print("Recieved connection from " + addr)
+        print("Recieved connection from " + addr[0])
         with conn:
             while True:
-                cmd = input(str(addr) + "# ")
+                cmd = input(str(addr[0]) + "# ")
                 if cmd.lower() == "exit":
                     print("Closing...")
                     break
-                s.sendall(cmd.encode())
-                data = s.recv(4096)
+                conn.send(cmd.encode())
+                data = conn.recv(4096)
                 print(data.decode(), end="")
 
 if not (len(sys.argv) == 3):
@@ -22,4 +22,4 @@ if not (len(sys.argv) == 3):
 elif not ((len(sys.argv[1].split('.')) == 4) and (int(sys.argv[2]) > 0 and int(sys.argv[2]) <= 510)):
     print("Invalid IP or port. Note: port range is between 1-510")
 else:
-    run(sys.argv[1], sys.argv[2])
+    run(sys.argv[1], int(sys.argv[2]))

