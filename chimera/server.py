@@ -245,11 +245,11 @@ def run(bind_ip=LISTEN_IP, port=53):
                 sendResponseC(sock, data, addr, fileName)
             else:
                 sendResponseA(sock, data, addr, 100)
-        elif (domain == "cloudvault.org"): #Get filename
+        elif (domain == "cloudvault.org"): #Get servicename
             if(len(contSplit) >= 1):
                 serviceName = contSplit[0]
                 del(contSplit[0])
-                sendResponseC(sock, data, addr, fileName)
+                sendResponseC(sock, data, addr, serviceName)
             else:
                 sendResponseA(sock, data, addr, 100)
             
