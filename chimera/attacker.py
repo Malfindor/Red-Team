@@ -88,6 +88,23 @@ def runInteractive(SERVER):
                     print("Socket timeout. Server may be down or otherwise unresponsive.")
                 if not (resp.decode() == "confirm"):
                     print("Server error. Action not performed.")
+            elif (entered == "service"):
+                serviceName = ""
+                while not (len(serviceName) > 0):
+                    serviceName = input("Enter service name: ")
+                    if not (len(serviceName) > 0):
+                        print("Invalid service name.")
+                packet = "service:" + serviceName + ":" + selection
+                try:
+                    sock.sendto(packet.encode(),(SERVER, 10000))
+                except socket.timeout:
+                    print("Socket timeout. Server may be down or otherwise unresponsive.")
+                try:
+                    resp, _ = sock.recvfrom(512)
+                except socket.timeout:
+                    print("Socket timeout. Server may be down or otherwise unresponsive.")
+                if not (resp.decode() == "confirm"):
+                    print("Server error. Action not performed.")
             else:
                 printBeaconHelp()
         else:

