@@ -1,0 +1,2 @@
+Ragnarok is a Linux ransomware tool, designed to lock a system with varying degrees of difficulty.
+USE WITH EXTREME CAUTION. NEITHER THE DEVELOPER NOR ANY CONTRIBUTOR ON THIS GITHUB IS RESPONSIBLE FOR DAMAGE DONE TO YOUR MACHINE OR ANY OTHERS.
