@@ -129,7 +129,6 @@ if(os.getuid() == 0):
     parser.add_argument('-p', '--passkey', dest='password', default='', type=str, required=True, help='Password used for user authentication') # MODIFY
     args = parser.parse_args(sys.argv[1:])
 
-    origin = args.origin
     password = args.password
 
     if args.encrypt and args.decrypt:
