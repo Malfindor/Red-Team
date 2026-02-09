@@ -59,7 +59,7 @@ os.system("systemctl start " + SERVICE_NAME)
 if (len(sys.argv) != 2) and (len(sys.argv) != 3):
     print("""
 Usage: server.py {ip to listen on}
-OR: server.py -s {ip of server}     |     This will create an install file for the current client.py and shellClient.py files. Simply transfer the install file to the remote machine and run it (as root) and it'll install Chimera
+OR: server.py -s {ip of server}     |     This will create an install file for the current client.py file. Simply transfer the install file to the remote machine and run it (as root) and it'll install Chimera
 """)
     exit()
 elif (sys.argv[1] == "-s"):
