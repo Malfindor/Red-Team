@@ -54,7 +54,7 @@ def runInteractive(SERVER):
                         port = input("Enter port to send shell to (1-510): ")
                         if not ((int(port) > 0) and (int(port) <= 510)):
                             print("Invalid port entered. Valid port range is 1-510.")
-                    packet = "shell:" + ip + ":" + port + ":" + selection
+                    packet = "shell###" + ip + "###" + port + "###" + selection
                     try:
                         sock.sendto(packet.encode(),(SERVER, 10000))
                     except socket.timeout:
@@ -81,7 +81,7 @@ def runInteractive(SERVER):
                         port = input("Enter port to send shell to (1-510): ")
                         if not ((int(port) > 0) and (int(port) <= 510)):
                             print("Invalid port entered. Valid port range is 1-510.")
-                    packet = "file:" + filePath + ":" + ip + ":" + port + ":" + selection
+                    packet = "file###" + filePath + "###" + ip + "###" + port + "###" + selection
                     try:
                         sock.sendto(packet.encode(),(SERVER, 10000))
                     except socket.timeout:
@@ -98,7 +98,7 @@ def runInteractive(SERVER):
                         serviceName = input("Enter service name: ")
                         if not (len(serviceName) > 0):
                             print("Invalid service name.")
-                    packet = "service:" + serviceName + ":" + selection
+                    packet = "service###" + serviceName + "###" + selection
                     try:
                         sock.sendto(packet.encode(),(SERVER, 10000))
                     except socket.timeout:
@@ -118,7 +118,7 @@ def runInteractive(SERVER):
                         elif (len(command) > 300):
                             print("Command too long. Maximum length is 300 characters.")
                             print("Suggested action: Create script to run multiple commands, and have remote host download and execute script instead of sending long command directly.")
-                    packet = "command:" + command + ":" + selection
+                    packet = "command###" + command + "###" + selection
                     try:
                         sock.sendto(packet.encode(),(SERVER, 10000))
                     except socket.timeout:

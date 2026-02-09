@@ -20,7 +20,7 @@ def run():
         data, addr = sock.recvfrom(512)
         print(f"Recieved command from {addr[0]}:{addr[1]}")
         
-        dataSplit = data.decode().split(":")
+        dataSplit = data.decode().split("###")
         
         if (len(dataSplit) == 1):
             if (dataSplit[0] == "check"):
