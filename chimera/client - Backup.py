@@ -4,7 +4,6 @@ import struct
 import sys
 import time
 import os
-import base64
 
 WAIT_TIME = 10
 
@@ -14,7 +13,7 @@ if (len(sys.argv) != 2):
 else:
     SERVER = sys.argv[1]
 
-def makeQuery(address, recordType='A'): #Default to A record, can specify TXT for TXT record queries
+def makeQuery(address, recordType='A'):
     query = b'\x12\x34'  # Transaction ID
     query += b'\x01\x00'  # Flags
     query += b'\x00\x01'  # QDCOUNT
@@ -40,53 +39,39 @@ def getResponse(data, recordType='A'):
         ancount = struct.unpack("!H", header[6:8])[0]
         offset = 12
 
-        # Skip question section
+        # Skip over the query section
         for _ in range(qdcount):
             while data[offset] != 0:
                 offset += data[offset] + 1
-            offset += 5  # 0 + QTYPE(2) + QCLASS(2)
+            offset += 5  # null byte + QTYPE(2) + QCLASS(2)
 
-        # Answer section
+        # Now at the start of answer section
         for _ in range(ancount):
+            # Skip NAME (2 bytes pointer) + TYPE(2) + CLASS(2) + TTL(4) + RDLENGTH(2)
             if offset + 12 > len(data):
                 break
-
             rtype = struct.unpack("!H", data[offset+2:offset+4])[0]
             rdlength = struct.unpack("!H", data[offset+10:offset+12])[0]
             offset += 12
-
-            rdata = data[offset:offset+rdlength]
-
-            if rtype == 16:  # TXT
-                txtData = b""
-                rdOffset = 0
-                while rdOffset < rdlength:
-                    if rdOffset + 1 > rdlength:
-                        break
-                    length = rdata[rdOffset]
-                    rdOffset += 1
-                    if rdOffset + length > rdlength:
-                        break
-                    txtData += rdata[rdOffset:rdOffset+length]
-                    rdOffset += length
-
-                if recordType.upper() == 'TXT' or recordType.upper() == 'ANY':
+            if recordType.upper() == 'TXT':
+                if rtype == 16:  # TXT record
+                    # TXT records have length-prefixed strings
+                    txtData = b''
+                    rdOffset = 0
+                    while rdOffset < rdlength:
+                        length = data[offset + rdOffset]
+                        rdOffset += 1
+                        txtData += data[offset + rdOffset:offset + rdOffset + length]
+                        rdOffset += length
                     answers.append(txtData.decode('utf-8', errors='ignore'))
-
-            elif rtype == 1 and rdlength == 4:  # A
-                if recordType.upper() == 'A' or recordType.upper() == 'ANY':
-                    ip = ".".join(str(b) for b in rdata[:4])
+            else:
+                if rtype == 1 and rdlength == 4:  # A record
+                    ip = ".".join(str(b) for b in data[offset:offset+4])
                     answers.append(ip)
-
             offset += rdlength
-
     except Exception as e:
         print("Parsing error:", e)
-
     return answers
-
-def from_base64(b64: str) -> str:
-    return base64.b64decode(b64.encode("ascii")).decode("ascii")
 
 def formSocket():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
