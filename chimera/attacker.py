@@ -109,6 +109,26 @@ def runInteractive(SERVER):
                         print("Socket timeout. Server may be down or otherwise unresponsive.")
                     if not (resp.decode() == "confirm"):
                         print("Server error. Action not performed.")
+                elif (entered == "command"):
+                    command = ""
+                    while not (len(command) > 0):
+                        command = input("Enter command to run: ")
+                        if not (len(command) > 0):
+                            print("Invalid command.")
+                        elif (len(command) > 300):
+                            print("Command too long. Maximum length is 300 characters.")
+                            print("Suggested action: Create script to run multiple commands, and have remote host download and execute script instead of sending long command directly.")
+                    packet = "command:" + command + ":" + selection
+                    try:
+                        sock.sendto(packet.encode(),(SERVER, 10000))
+                    except socket.timeout:
+                        print("Socket timeout. Server may be down or otherwise unresponsive.")
+                    try:
+                        resp, _ = sock.recvfrom(512)
+                    except socket.timeout:
+                        print("Socket timeout. Server may be down or otherwise unresponsive.")
+                    if not (resp.decode() == "confirm"):
+                        print("Server error. Action not performed.")
                 else:
                     printBeaconHelp()
         else:

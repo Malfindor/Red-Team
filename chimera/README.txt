@@ -40,7 +40,8 @@ Response B - Responds with 2 addresses:
 Response C - Responds with any number of addresses:
 	Each quartet of the address is translated into it's ascii character until the value "3" is reached
 	Designates a filename or service name
-Response D - Responds with a TXT record:
+Response D - Single IP from standard responses (when specific value is in place 2)
+Response E - Responds with a TXT record:
 	Length of original text string(in ascii) capped at 300, as the data is encoded into base64
 	Base64 encoding will take length to 400, which leaves plenty of room within the 512-byte constraint
 	
@@ -55,3 +56,5 @@ Beacon Commands: *Found in the beacon's file located on the server. CAUTION: Do 
 		10.10.10.10:429
 "service" - Stop service
 	- Next line will contain service name to stop
+"Command" - Send remote command to be run on remote system
+	- Next line contains the command to run

