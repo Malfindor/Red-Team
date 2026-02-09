@@ -7,7 +7,7 @@ import os
 import base64
 
 def createInstaller(host):
-    if(os.path.exists('./client.py') and os.path.exists('./shellClient.py')):
+    if(os.path.exists('./client.py')):
         print("Creating installer located at ./installer.py...")
         f = open('./client.py', 'r')
         clientConts = f.read()
