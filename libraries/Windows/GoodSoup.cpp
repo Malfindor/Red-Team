@@ -8,7 +8,7 @@ DWORD WINAPI WorkerThread(LPVOID lpParam)
 
     while (true)
     {
-        // Random delay between 60 and 120 seconds
+        //Random delay between 60 and 120 seconds
         int delay = (rand() % 61 + 60) * 1000;
 
         Sleep(delay);
@@ -19,6 +19,8 @@ DWORD WINAPI WorkerThread(LPVOID lpParam)
             L"Info",
             MB_OK | MB_ICONINFORMATION
         );
+
+        Sleep(1000); // Sleep for 1 second before showing the next message box
     }
 
     return 0;
