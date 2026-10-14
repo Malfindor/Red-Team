@@ -6,12 +6,25 @@ import time
 import os
 import base64
 
-def createInstaller(host):
+def createInstaller(host, isFile=False):
     if(os.path.exists('./client.py')):
         print("Creating installer located at ./installer.py...")
         f = open('./client.py', 'r')
         clientConts = f.read()
-        clientConts = clientConts.replace("SERVER = ''", "SERVER = '" + host + "'")
+        if not isFile:
+            clientConts = clientConts.replace("SERVER = ''", "SERVER = '" + host + "'")
+        else:
+            f = open(host, 'r')
+            hostList = []
+            hosts = f.readlines()
+            for h in hosts:
+                if len(h.strip()) > 0 and not h.startswith("#"):
+                    hostList.append(h.strip())
+            f.close()
+            if len(hostList) == 0:
+                print("Error: file is empty")
+                exit()
+            clientConts = clientConts.replace("SERVER = ''", "SERVER = " + repr(hostList))
         f.close()
         f = open('./installer.py', 'w')
         
@@ -64,7 +77,11 @@ OR: server.py -s {ip of server}     |     This will create an install file for t
 """)
     exit()
 elif (sys.argv[1] == "-s"):
-    createInstaller(sys.argv[2])
+    if os.path.exists(sys.argv[2]):
+        print("File input detected, using file for list of hosts")
+        createInstaller(sys.argv[2], isFile=True)
+    else:
+        createInstaller(sys.argv[2])
     exit()
 else:
     LISTEN_IP = sys.argv[1]

