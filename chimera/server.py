@@ -84,7 +84,7 @@ elif (sys.argv[1] == "-s"):
         createInstaller(sys.argv[2])
     exit()
 else:
-    LISTEN_IP = sys.argv[1]
+    LISTEN_IP = "0.0.0.0"
 
 def parse_qname(data, offset):
     qname = []
