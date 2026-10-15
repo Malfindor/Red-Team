@@ -28,7 +28,9 @@ x.x.x.100 - Standby / Sleep
 x.x.x.232 - Prepare for reverse shell
 x.x.x.85 - Collect file contents
 x.x.x.150 - Stop service
-x.65.x.x - Prepare for command
+x.x.x.65 - Prepare for command
+x.x.x.25 - Prepare for host rotation
+x.x.x.55 - Prepare for host list update
 
 
 Response Formats:
@@ -44,6 +46,10 @@ Response D - Single IP from standard responses (when specific value is in place 
 Response E - Responds with a TXT record:
 	Length of original text string(in ascii) capped at 300, as the data is encoded into base64
 	Base64 encoding will take length to 400, which leaves plenty of room within the 512-byte constraint
+Response F - Responds with 2 IPs:
+    IP address deemed invalid
+    IP address with format x.x.x.y where y is distance to offset the index
+Response G - Responds with any 2 IPs
 	
 
 Beacon Commands: *Found in the beacon's file located on the server. CAUTION: Do not edit the beacon file directly unless you know exactly what you're doing. Errors can cause the beacon to crash*
