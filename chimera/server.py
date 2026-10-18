@@ -241,7 +241,7 @@ def rotateServer(distance, ip_hex, addr):
         old_ip = TO_BE_ROTATED[0]
         _, _, new_ip = change_mac_by_ip(old_ip)
     for _, _, filename in os.walk("/tmp/chimera/"):
-        for file in filename[2]:
+        for file in filename:
             if file != addr[0]:
                 f = open("/tmp/chimera/" + file, "r")
                 currentConts = f.readlines()
@@ -249,7 +249,7 @@ def rotateServer(distance, ip_hex, addr):
                 newConts = []
                 newConts.append("rotate")
                 newConts.append(str(distance))
-                newConts.append(new_ip)
+                newConts.append(socket.inet_ntoa(bytes.fromhex(ip_hex)))
                 for line in currentConts:
                     newConts.append(line)
                 f = open("/tmp/chimera/" + file, "w")

