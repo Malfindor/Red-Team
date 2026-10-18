@@ -199,7 +199,7 @@ def phoneHome(domain, sock, recordType=None):
                             curIndex += 1
                             distance += 1
                         except OSError as e:
-                            if e.errno in (errno.EPERM):
+                            if e.errno in [errno.EPERM]:
                                 curIndex += 1
                                 distance += 1
     else:
@@ -228,7 +228,7 @@ def phoneHome(domain, sock, recordType=None):
                             curIndex += 1
                             distance += 1
                         except OSError as e:
-                            if e.errno in (errno.EPERM):
+                            if e.errno in [errno.EPERM]:
                                 curIndex += 1
                                 distance += 1
     try:
@@ -239,10 +239,8 @@ def phoneHome(domain, sock, recordType=None):
             return []
         else:
             distance = 1
-            curIndex += 1
+            curIndex = (curIndex + 1) % len(SERVER)
             while curIndex != CURR_SERVER_INDEX:
-                if curIndex >= len(SERVER):
-                    curIndex = 0
                 server = SERVER[curIndex]
                 try:
                     if recordType:
@@ -253,8 +251,9 @@ def phoneHome(domain, sock, recordType=None):
                     rotateServer(distance)
                     return getResponse(resp)
                 except socket.timeout:
-                    curIndex += 1
+                    curIndex = (curIndex + 1) % len(SERVER)
                     distance += 1
+            return []
     except OSError as e:
         if e.errno in (errno.EHOSTUNREACH, errno.ENETUNREACH, errno.EACCES):
             rotateServer(distance)
